@@ -103,8 +103,8 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
                                   _buildEssentialFields(transactionProvider),
                                   const SizedBox(height: 20),
                                   
-                                  // Optional Fields (Collapsible)
-                                  _buildOptionalFields(),
+                                  // Receipt Image Section
+                                  _buildReceiptSection(),
                                 ],
                               ),
                             ),
@@ -227,6 +227,25 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         ),
         const SizedBox(height: 8),
         
+        // Title input (compact)
+        TextFormField(
+          controller: _controller.descriptionController,
+          decoration: InputDecoration(
+            hintText: 'Enter transaction title',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: const Icon(Icons.title),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a title';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        
         // Large amount input
         TextFormField(
           controller: _controller.amountController,
@@ -317,12 +336,18 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         ),
         const SizedBox(height: 12),
         
-        // Title and Date in one row
+        // Subcategory (if category selected)
+        if (_controller.selectedCategoryId != null) ...[
+          _buildSubcategoryCard(transactionProvider),
+          const SizedBox(height: 12),
+        ],
+        
+        // Date and Notes in one row
         Row(
           children: [
-            Expanded(child: _buildTitleCard()),
-            const SizedBox(width: 12),
             Expanded(child: _buildDateCard()),
+            const SizedBox(width: 12),
+            Expanded(child: _buildNotesCard()),
           ],
         ),
       ],
@@ -340,6 +365,8 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
+        isExpanded: true,
+        menuMaxHeight: 200,
         items: transactionProvider.accounts.map((account) {
           return DropdownMenuItem<String>(
             value: account.id,
@@ -372,6 +399,8 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
+        isExpanded: true,
+        menuMaxHeight: 200,
         items: mainCategories.map((category) {
           return DropdownMenuItem<String>(
             value: category.id,
@@ -388,28 +417,6 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
     );
   }
 
-  /// Title input card
-  Widget _buildTitleCard() {
-    return _buildInfoCard(
-      title: 'Title',
-      icon: Icons.title,
-      child: TextFormField(
-        controller: _controller.descriptionController,
-        decoration: const InputDecoration(
-          hintText: 'Enter title',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        ),
-        style: const TextStyle(fontSize: 14),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'Enter title';
-          }
-          return null;
-        },
-      ),
-    );
-  }
 
   /// Date selection card
   Widget _buildDateCard() {
@@ -474,71 +481,54 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
     );
   }
 
-  /// Optional fields (collapsible)
-  Widget _buildOptionalFields() {
-    return ExpansionTile(
-      title: Text(
-        'More Options',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      children: [
-        // Subcategory (if main category selected)
-        if (_controller.selectedCategoryId != null) ...[
-          _buildSubcategoryField(),
-          const SizedBox(height: 12),
-        ],
-        
-        // Notes
-        _buildNotesField(),
-        const SizedBox(height: 12),
-        
-        // Receipt Image
-        _buildReceiptField(),
-      ],
-    );
-  }
-
-  Widget _buildSubcategoryField() {
+  /// Subcategory selection card (always visible when category selected)
+  Widget _buildSubcategoryCard(TransactionProviderHive transactionProvider) {
+    final subcategories = transactionProvider.getSubcategories(_controller.selectedCategoryId!);
+    
     return _buildInfoCard(
       title: 'Subcategory',
       icon: Icons.subdirectory_arrow_right,
-      child: Consumer<TransactionProviderHive>(
-        builder: (context, transactionProvider, child) {
-          final subcategories = transactionProvider.getSubcategories(_controller.selectedCategoryId!);
-          
-          if (subcategories.isEmpty) {
-            return const Text(
-              'No subcategories',
+      child: subcategories.isEmpty
+          ? const Text(
+              'No subcategories available',
               style: TextStyle(fontSize: 14, color: Colors.grey),
-            );
-          }
-          
-          return DropdownButtonFormField<String>(
-            value: _controller.selectedSubcategoryId,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            items: subcategories.map((subcategory) {
-              return DropdownMenuItem<String>(
-                value: subcategory.id,
-                child: Text(
-                  subcategory.name,
-                  style: const TextStyle(fontSize: 14),
-                  overflow: TextOverflow.ellipsis,
+            )
+          : DropdownButtonFormField<String>(
+              value: _controller.selectedSubcategoryId,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                hintText: 'Select subcategory (optional)',
+              ),
+              isExpanded: true,
+              menuMaxHeight: 200,
+              items: [
+                // Add "None" option
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('None', style: TextStyle(fontSize: 14)),
                 ),
-              );
-            }).toList(),
-            onChanged: _controller.updateSubcategoryId,
-          );
-        },
-      ),
+                // Add all subcategories
+                ...subcategories.map((subcategory) {
+                  return DropdownMenuItem<String>(
+                    value: subcategory.id,
+                    child: Text(
+                      subcategory.name,
+                      style: const TextStyle(fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }),
+              ],
+              onChanged: (value) {
+                _controller.updateSubcategoryId(value);
+              },
+            ),
     );
   }
 
-  Widget _buildNotesField() {
+  /// Notes input card
+  Widget _buildNotesCard() {
     return _buildInfoCard(
       title: 'Notes',
       icon: Icons.note,
@@ -553,6 +543,18 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
       ),
     );
   }
+
+  /// Receipt image section
+  Widget _buildReceiptSection() {
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        _buildReceiptField(),
+      ],
+    );
+  }
+
+
 
   Widget _buildReceiptField() {
     return _buildInfoCard(
