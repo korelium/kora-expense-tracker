@@ -53,13 +53,46 @@ class TransactionProvider with ChangeNotifier {
   }
 
   Future<void> _loadAccounts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final accountsJson = prefs.getString('accounts');
-    if (accountsJson != null) {
-      final List<dynamic> accountsList = json.decode(accountsJson);
-      _accounts = accountsList.map((json) => Account.fromJson(json)).toList();
-    } else {
-      // Create default accounts
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accountsJson = prefs.getString('accounts');
+      if (accountsJson != null) {
+        final List<dynamic> accountsList = json.decode(accountsJson);
+        _accounts = accountsList.map((json) {
+          try {
+            return Account.fromJson(json);
+          } catch (e) {
+            print('Error loading account: $e');
+            // Return a default account if parsing fails
+            return Account(
+              id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+              name: 'Corrupted Account',
+              balance: 0.0,
+              type: AccountType.bank,
+            );
+          }
+        }).toList();
+      } else {
+        // Create default accounts
+        _accounts = [
+          Account(
+            id: '1',
+            name: 'Cash',
+            balance: 0.0,
+            type: AccountType.cash,
+          ),
+        Account(
+          id: '2',
+          name: 'Bank Account',
+          balance: 0.0,
+          type: AccountType.bank,
+        ),
+      ];
+      await _saveAccounts();
+    }
+    } catch (e) {
+      print('Error loading accounts: $e');
+      // Fallback to default accounts
       _accounts = [
         Account(
           id: '1',
@@ -74,7 +107,6 @@ class TransactionProvider with ChangeNotifier {
           type: AccountType.bank,
         ),
       ];
-      await _saveAccounts();
     }
     notifyListeners();
   }

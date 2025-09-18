@@ -54,11 +54,30 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   Future<void> _loadAccounts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final accountsJson = prefs.getString('accounts');
-    if (accountsJson != null) {
-      final List<dynamic> accountsList = json.decode(accountsJson);
-      _accounts = accountsList.map((json) => Account.fromJson(json)).toList();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accountsJson = prefs.getString('accounts');
+      if (accountsJson != null) {
+        final List<dynamic> accountsList = json.decode(accountsJson);
+        _accounts = accountsList.map((json) {
+          try {
+            return Account.fromJson(json);
+          } catch (e) {
+            print('Error loading account: $e');
+            // Return a default account if parsing fails
+            return Account(
+              id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+              name: 'Corrupted Account',
+              balance: 0.0,
+              type: AccountType.bank,
+            );
+          }
+        }).toList();
+      }
+    } catch (e) {
+      print('Error loading accounts: $e');
+      // Fallback to empty list
+      _accounts = [];
     }
     notifyListeners();
   }

@@ -25,11 +25,12 @@ class Account {
 
   factory Account.fromJson(Map<String, dynamic> json) {
     return Account(
-      id: json['id'],
-      name: json['name'],
-      balance: (json['balance'] as num).toDouble(),
+      id: json['id'] ?? '',
+      name: json['name'] ?? 'Unknown Account',
+      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
       type: AccountType.values.firstWhere(
         (e) => e.toString().split('.').last == json['type'],
+        orElse: () => AccountType.bank, // Default to bank if not found
       ),
       description: json['description'],
     );
