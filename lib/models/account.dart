@@ -40,6 +40,7 @@ class Account {
 enum AccountType {
   bank,
   cash,
-  creditCard,
+  creditCard, // This is a liability
   investment,
+  liability, // General liability account
 }

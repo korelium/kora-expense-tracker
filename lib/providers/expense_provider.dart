@@ -83,14 +83,33 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   Future<void> _loadCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-    final categoriesJson = prefs.getString('categories');
-    if (categoriesJson != null) {
-      final List<dynamic> categoriesList = json.decode(categoriesJson);
-      _categories = categoriesList
-          .map((json) => app_category.Category.fromJson(json))
-          .where((category) => category.type == app_category.CategoryType.expense)
-          .toList();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final categoriesJson = prefs.getString('categories');
+      if (categoriesJson != null) {
+        final List<dynamic> categoriesList = json.decode(categoriesJson);
+        _categories = categoriesList
+            .map((json) {
+              try {
+                return app_category.Category.fromJson(json);
+              } catch (e) {
+                print('Error loading category: $e');
+                // Return a default category if parsing fails
+                return app_category.Category(
+                  id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+                  name: 'Unknown Category',
+                  icon: Icons.category.codePoint.toString(),
+                  type: app_category.CategoryType.expense,
+                );
+              }
+            })
+            .where((category) => category.type == app_category.CategoryType.expense)
+            .toList();
+      }
+    } catch (e) {
+      print('Error loading categories: $e');
+      // Fallback to empty list
+      _categories = [];
     }
     notifyListeners();
   }

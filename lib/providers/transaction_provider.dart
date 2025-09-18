@@ -112,12 +112,26 @@ class TransactionProvider with ChangeNotifier {
   }
 
   Future<void> _loadCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-    final categoriesJson = prefs.getString('categories');
-    if (categoriesJson != null) {
-      final List<dynamic> categoriesList = json.decode(categoriesJson);
-      _categories = categoriesList.map((json) => app_category.Category.fromJson(json)).toList();
-    } else {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final categoriesJson = prefs.getString('categories');
+      if (categoriesJson != null) {
+        final List<dynamic> categoriesList = json.decode(categoriesJson);
+        _categories = categoriesList.map((json) {
+          try {
+            return app_category.Category.fromJson(json);
+          } catch (e) {
+            print('Error loading category: $e');
+            // Return a default category if parsing fails
+            return app_category.Category(
+              id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+              name: 'Unknown Category',
+              icon: Icons.category.codePoint.toString(),
+              type: app_category.CategoryType.expense,
+            );
+          }
+        }).toList();
+      } else {
       // Create default categories
       _categories = [
         // Income categories
@@ -161,6 +175,24 @@ class TransactionProvider with ChangeNotifier {
       ];
       await _saveCategories();
     }
+    } catch (e) {
+      print('Error loading categories: $e');
+      // Fallback to default categories
+      _categories = [
+        app_category.Category(
+          id: '1',
+          name: 'Salary',
+          icon: Icons.work.codePoint.toString(),
+          type: app_category.CategoryType.income,
+        ),
+        app_category.Category(
+          id: '2',
+          name: 'Food',
+          icon: Icons.restaurant.codePoint.toString(),
+          type: app_category.CategoryType.expense,
+        ),
+      ];
+    }
     notifyListeners();
   }
 
@@ -172,6 +204,21 @@ class TransactionProvider with ChangeNotifier {
 
   Future<void> addAccount(Account account) async {
     _accounts.add(account);
+    await _saveAccounts();
+    notifyListeners();
+  }
+
+  Future<void> updateAccount(Account account) async {
+    final index = _accounts.indexWhere((a) => a.id == account.id);
+    if (index != -1) {
+      _accounts[index] = account;
+      await _saveAccounts();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteAccount(String accountId) async {
+    _accounts.removeWhere((a) => a.id == accountId);
     await _saveAccounts();
     notifyListeners();
   }

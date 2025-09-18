@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/currency_provider.dart';
 import '../providers/transaction_provider.dart';
+import 'add_account_screen.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -37,12 +38,53 @@ class AccountsScreen extends StatelessWidget {
                         ),
                         title: Text(account.name),
                         subtitle: Text(_getAccountTypeName(account.type)),
-                        trailing: Text(
-                          currencyProvider.formatAmount(account.balance),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              currencyProvider.formatAmount(account.balance),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddAccountScreen(account: account),
+                                    ),
+                                  );
+                                } else if (value == 'delete') {
+                                  _confirmDeleteAccount(context, account);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(color: Colors.red)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -50,8 +92,11 @@ class AccountsScreen extends StatelessWidget {
                 ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Add account feature coming soon!')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddAccountScreen(),
+                ),
               );
             },
             child: const Icon(Icons.add),
@@ -83,11 +128,43 @@ class AccountsScreen extends StatelessWidget {
       case 'AccountType.cash':
         return 'Cash';
       case 'AccountType.creditCard':
-        return 'Credit Card';
+        return 'Credit Card (Liability)';
       case 'AccountType.investment':
         return 'Investment';
+      case 'AccountType.liability':
+        return 'Liability';
       default:
         return 'Account';
     }
+  }
+
+  void _confirmDeleteAccount(BuildContext context, Account account) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Text('Are you sure you want to delete "${account.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              context.read<TransactionProvider>().deleteAccount(account.id);
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Account deleted successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 }
