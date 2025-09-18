@@ -198,6 +198,16 @@ class RecentTransactionsWidget extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          if (transaction.subcategoryId != null) ...[
+                            Text(
+                              ' • ${_getSubcategoryName(context, transaction)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
                           Text(
                             ' • ${_formatDate(transaction.date)}',
                             style: TextStyle(
@@ -206,6 +216,33 @@ class RecentTransactionsWidget extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
+                        ],
+                      ),
+                      
+                      // Account and Notes (if available)
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            _getAccountName(context, transaction),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          if (_hasNotes(transaction)) ...[
+                            Text(
+                              ' • ${_getNotes(transaction)}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -232,66 +269,23 @@ class RecentTransactionsWidget extends StatelessWidget {
                     
                     const SizedBox(height: 4),
                     
-                    // Action Buttons
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Edit Button
-                        GestureDetector(
-                          onTap: () => _editTransaction(context, transaction),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Icon(
-                              Icons.edit,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                    // Image Icon (if receipt exists)
+                    if (transaction.receiptImagePath != null)
+                      GestureDetector(
+                        onTap: () => _showImagePreview(context, transaction),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.image,
+                            size: 14,
+                            color: Color(0xFF10B981),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        
-                        // Delete Button
-                        GestureDetector(
-                          onTap: () => _showDeleteConfirmation(context, transaction),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Icon(
-                              Icons.delete,
-                              size: 14,
-                              color: Color(0xFFEF4444),
-                            ),
-                          ),
-                        ),
-                        
-                        // Image Icon (if receipt exists)
-                        if (transaction.receiptImagePath != null) ...[
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () => _showImagePreview(context, transaction),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Icon(
-                                Icons.image,
-                                size: 14,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
                   ],
                 ),
               ],
@@ -318,47 +312,6 @@ class RecentTransactionsWidget extends StatelessWidget {
     }
   }
 
-  /// Show delete confirmation dialog
-  void _showDeleteConfirmation(BuildContext context, Transaction transaction) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Transaction'),
-          content: Text(
-            'Are you sure you want to delete "${transaction.description}"?\n\nThis action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                final provider = Provider.of<TransactionProviderHive>(context, listen: false);
-                await provider.deleteTransaction(transaction.id);
-                
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Transaction deleted successfully'),
-                      backgroundColor: const Color(0xFF22C55E),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   /// Show image preview dialog
   void _showImagePreview(BuildContext context, Transaction transaction) {
@@ -444,6 +397,37 @@ class RecentTransactionsWidget extends StatelessWidget {
     final provider = Provider.of<TransactionProviderHive>(context, listen: false);
     final category = provider.getCategory(transaction.categoryId);
     return category?.name ?? 'Unknown Category';
+  }
+
+  /// Get subcategory name from provider
+  String _getSubcategoryName(BuildContext context, Transaction transaction) {
+    final provider = Provider.of<TransactionProviderHive>(context, listen: false);
+    final subcategory = provider.getCategory(transaction.subcategoryId!);
+    return subcategory?.name ?? 'Unknown Subcategory';
+  }
+
+  /// Get account name from provider
+  String _getAccountName(BuildContext context, Transaction transaction) {
+    final provider = Provider.of<TransactionProviderHive>(context, listen: false);
+    final account = provider.getAccount(transaction.accountId);
+    return account?.name ?? 'Unknown Account';
+  }
+
+  /// Check if transaction has notes
+  bool _hasNotes(Transaction transaction) {
+    // For now, we'll use the description field as notes
+    // In the future, we might have a separate notes field
+    return transaction.description.isNotEmpty && 
+           transaction.description.length > 50; // Only show if it's long enough to be notes
+  }
+
+  /// Get notes from transaction
+  String _getNotes(Transaction transaction) {
+    // For now, truncate description if it's long
+    if (transaction.description.length > 50) {
+      return '${transaction.description.substring(0, 47)}...';
+    }
+    return transaction.description;
   }
 
   /// Get category color
