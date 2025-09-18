@@ -342,11 +342,13 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           const SizedBox(height: 12),
         ],
         
-        // Date and Notes in one row
+        // Date, Time, and Notes in one row
         Row(
           children: [
             Expanded(child: _buildDateCard()),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
+            Expanded(child: _buildTimeCard()),
+            const SizedBox(width: 8),
             Expanded(child: _buildNotesCard()),
           ],
         ),
@@ -390,30 +392,47 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         : app_category.CategoryType.expense;
     final mainCategories = transactionProvider.getMainCategories(categoryType);
     
-    return _buildInfoCard(
-      title: 'Category',
-      icon: Icons.category,
-      child: DropdownButtonFormField<String>(
-        value: _controller.selectedCategoryId,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        ),
-        isExpanded: true,
-        menuMaxHeight: 200,
-        items: mainCategories.map((category) {
-          return DropdownMenuItem<String>(
-            value: category.id,
-            child: Text(
-              category.name,
-              style: const TextStyle(fontSize: 14),
-              overflow: TextOverflow.ellipsis,
+    return Column(
+      children: [
+        _buildInfoCard(
+          title: 'Category',
+          icon: Icons.category,
+          child: DropdownButtonFormField<String>(
+            value: _controller.selectedCategoryId,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
-          );
-        }).toList(),
-        onChanged: _controller.updateCategoryId,
-        validator: (value) => value == null ? 'Select category' : null,
-      ),
+            isExpanded: true,
+            menuMaxHeight: 200,
+            items: mainCategories.map((category) {
+              return DropdownMenuItem<String>(
+                value: category.id,
+                child: Text(
+                  category.name,
+                  style: const TextStyle(fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: _controller.updateCategoryId,
+            validator: (value) => value == null ? 'Select category' : null,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton.icon(
+            onPressed: () => _showAddCategoryDialog(),
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add Category', style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -429,6 +448,24 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text(
             '${_controller.selectedDate.day}/${_controller.selectedDate.month}/${_controller.selectedDate.year}',
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Time selection card
+  Widget _buildTimeCard() {
+    return _buildInfoCard(
+      title: 'Time',
+      icon: Icons.access_time,
+      child: GestureDetector(
+        onTap: _selectTime,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            '${_controller.selectedTime.hour.toString().padLeft(2, '0')}:${_controller.selectedTime.minute.toString().padLeft(2, '0')}',
             style: const TextStyle(fontSize: 14),
           ),
         ),
@@ -485,45 +522,62 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
   Widget _buildSubcategoryCard(TransactionProviderHive transactionProvider) {
     final subcategories = transactionProvider.getSubcategories(_controller.selectedCategoryId!);
     
-    return _buildInfoCard(
-      title: 'Subcategory',
-      icon: Icons.subdirectory_arrow_right,
-      child: subcategories.isEmpty
-          ? const Text(
-              'No subcategories available',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            )
-          : DropdownButtonFormField<String>(
-              value: _controller.selectedSubcategoryId,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                hintText: 'Select subcategory (optional)',
-              ),
-              isExpanded: true,
-              menuMaxHeight: 200,
-              items: [
-                // Add "None" option
-                const DropdownMenuItem<String>(
-                  value: null,
-                  child: Text('None', style: TextStyle(fontSize: 14)),
-                ),
-                // Add all subcategories
-                ...subcategories.map((subcategory) {
-                  return DropdownMenuItem<String>(
-                    value: subcategory.id,
-                    child: Text(
-                      subcategory.name,
-                      style: const TextStyle(fontSize: 14),
-                      overflow: TextOverflow.ellipsis,
+    return Column(
+      children: [
+        _buildInfoCard(
+          title: 'Subcategory',
+          icon: Icons.subdirectory_arrow_right,
+          child: subcategories.isEmpty
+              ? const Text(
+                  'No subcategories available',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                )
+              : DropdownButtonFormField<String>(
+                  value: _controller.selectedSubcategoryId,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    hintText: 'Select subcategory (optional)',
+                  ),
+                  isExpanded: true,
+                  menuMaxHeight: 200,
+                  items: [
+                    // Add "None" option
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('None', style: TextStyle(fontSize: 14)),
                     ),
-                  );
-                }),
-              ],
-              onChanged: (value) {
-                _controller.updateSubcategoryId(value);
-              },
+                    // Add all subcategories
+                    ...subcategories.map((subcategory) {
+                      return DropdownMenuItem<String>(
+                        value: subcategory.id,
+                        child: Text(
+                          subcategory.name,
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    _controller.updateSubcategoryId(value);
+                  },
+                ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton.icon(
+            onPressed: () => _showAddSubcategoryDialog(),
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add Subcategory', style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              padding: const EdgeInsets.symmetric(vertical: 8),
             ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -680,6 +734,17 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
     }
   }
 
+  /// Select time
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _controller.selectedTime,
+    );
+    if (picked != null && picked != _controller.selectedTime) {
+      _controller.updateTime(picked);
+    }
+  }
+
   /// Show delete confirmation dialog
   Future<void> _showDeleteConfirmation() async {
     final confirmed = await showDialog<bool>(
@@ -725,6 +790,40 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           );
         }
       }
+    }
+  }
+
+  /// Show add category dialog
+  Future<void> _showAddCategoryDialog() async {
+    final categoryType = _controller.selectedType == TransactionType.income 
+        ? app_category.CategoryType.income 
+        : app_category.CategoryType.expense;
+    
+    final result = await Navigator.pushNamed(
+      context,
+      '/add-category',
+      arguments: {'type': categoryType, 'parentId': null},
+    );
+    
+    if (result == true) {
+      setState(() {}); // Refresh the form
+    }
+  }
+
+  /// Show add subcategory dialog
+  Future<void> _showAddSubcategoryDialog() async {
+    final categoryType = _controller.selectedType == TransactionType.income 
+        ? app_category.CategoryType.income 
+        : app_category.CategoryType.expense;
+    
+    final result = await Navigator.pushNamed(
+      context,
+      '/add-category',
+      arguments: {'type': categoryType, 'parentId': _controller.selectedCategoryId},
+    );
+    
+    if (result == true) {
+      setState(() {}); // Refresh the form
     }
   }
 
