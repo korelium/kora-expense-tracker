@@ -342,16 +342,18 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           const SizedBox(height: 12),
         ],
         
-        // Date, Time, and Notes in one row
+        // Date and Time in one row
         Row(
           children: [
             Expanded(child: _buildDateCard()),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(child: _buildTimeCard()),
-            const SizedBox(width: 8),
-            Expanded(child: _buildNotesCard()),
           ],
         ),
+        const SizedBox(height: 12),
+        
+        // Notes section (full width)
+        _buildNotesSection(),
       ],
     );
   }
@@ -581,19 +583,53 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
     );
   }
 
-  /// Notes input card
-  Widget _buildNotesCard() {
-    return _buildInfoCard(
-      title: 'Notes',
-      icon: Icons.note,
-      child: TextFormField(
-        maxLines: 2,
-        decoration: const InputDecoration(
-          hintText: 'Add notes...',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  /// Notes section (full width, bigger)
+  Widget _buildNotesSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
-        style: const TextStyle(fontSize: 14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.note, size: 16, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Notes',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Add any additional notes about this transaction...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              contentPadding: EdgeInsets.all(12),
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
       ),
     );
   }
@@ -799,10 +835,56 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         ? app_category.CategoryType.income 
         : app_category.CategoryType.expense;
     
-    final result = await Navigator.pushNamed(
-      context,
-      '/add-category',
-      arguments: {'type': categoryType, 'parentId': null},
+    final nameController = TextEditingController();
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add ${categoryType.name} Category'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Category Name',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                try {
+                  final transactionProvider = Provider.of<TransactionProviderHive>(context, listen: false);
+                  final newCategory = app_category.Category(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: nameController.text.trim(),
+                    icon: 'category',
+                    type: categoryType,
+                    color: '0xFF3B82F6',
+                  );
+                  
+                  await transactionProvider.addCategory(newCategory);
+                  Navigator.pop(context, true);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
     
     if (result == true) {
@@ -812,14 +894,63 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
 
   /// Show add subcategory dialog
   Future<void> _showAddSubcategoryDialog() async {
+    if (_controller.selectedCategoryId == null) return;
+    
     final categoryType = _controller.selectedType == TransactionType.income 
         ? app_category.CategoryType.income 
         : app_category.CategoryType.expense;
     
-    final result = await Navigator.pushNamed(
-      context,
-      '/add-category',
-      arguments: {'type': categoryType, 'parentId': _controller.selectedCategoryId},
+    final nameController = TextEditingController();
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Subcategory'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Subcategory Name',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                try {
+                  final transactionProvider = Provider.of<TransactionProviderHive>(context, listen: false);
+                  final newSubcategory = app_category.Category(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: nameController.text.trim(),
+                    icon: 'subdirectory_arrow_right',
+                    type: categoryType,
+                    color: '0xFF8B5CF6',
+                    parentId: _controller.selectedCategoryId,
+                  );
+                  
+                  await transactionProvider.addCategory(newSubcategory);
+                  Navigator.pop(context, true);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
     
     if (result == true) {
