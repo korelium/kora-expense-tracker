@@ -117,10 +117,21 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
+                              icon: Icon(
+                                Icons.clear,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
                               onPressed: () {
                                 setState(() {
                                   _searchController.clear();
@@ -131,12 +142,30 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       filled: true,
                       fillColor: Theme.of(context).colorScheme.surface,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
@@ -149,6 +178,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                     border: Border.all(
                       color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                     ),
@@ -158,11 +188,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     child: DropdownButton<String>(
                       value: _selectedFilter,
                       isDense: true,
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 20,
+                      ),
                       items: _filterOptions.map((filter) {
                         return DropdownMenuItem<String>(
                           value: filter,
-                          child: Text(filter),
+                          child: Text(
+                            filter,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
