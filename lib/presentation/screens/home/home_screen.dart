@@ -15,6 +15,7 @@ import '../../widgets/common/currency_selector.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/theme_toggle.dart';
 import '../../widgets/common/dashboard_widgets.dart';
+import '../../widgets/recent_transactions_widget.dart';
 
 // Utility imports
 import '../../../core/utils/financial_calculator.dart';
@@ -554,6 +555,17 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                    ],
                  ),
           const SizedBox(height: 20),
+          
+          // Recent Transactions
+          RecentTransactionsWidget(
+            transactions: transactionProvider.transactions,
+            onViewAll: () {
+              // Switch to transactions tab
+              _tabController.animateTo(1);
+            },
+          ),
+          
+          const SizedBox(height: 16),
           
           // Financial Insight
           InsightCard(
