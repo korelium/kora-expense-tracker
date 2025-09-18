@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/providers/currency_provider.dart';
 import '../../../data/models/transaction.dart';
+import '../../widgets/transaction_card.dart';
 import 'add_expense_screen.dart';
 
 class ExpenseListScreen extends StatefulWidget {
@@ -262,7 +263,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                   itemCount: filteredTransactions.length,
                   itemBuilder: (context, index) {
                     final transaction = filteredTransactions[index];
-                    return _buildTransactionCard(context, transaction, currencyProvider);
+                    return TransactionCard(
+                      transaction: transaction,
+                      onTap: () => _editTransaction(context, transaction),
+                      onEdit: () => _editTransaction(context, transaction),
+                      onDelete: () => _showDeleteConfirmation(context, transaction),
+                    );
                   },
                 ),
               ),
@@ -297,137 +303,21 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
-  Widget _buildTransactionCard(BuildContext context, Transaction transaction, CurrencyProvider currencyProvider) {
-    final isIncome = transaction.type == TransactionType.income;
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surfaceContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  /// Edit transaction
+  Future<void> _editTransaction(BuildContext context, Transaction transaction) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddExpenseScreen(
+          expense: transaction,
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: isIncome
-                ? const Color(0xFF22C55E).withValues(alpha: 0.15)
-                : const Color(0xFFEF4444).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isIncome
-                  ? const Color(0xFF22C55E).withValues(alpha: 0.2)
-                  : const Color(0xFFEF4444).withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Icon(
-            isIncome ? Icons.arrow_upward : Icons.arrow_downward,
-            color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
-            size: 24,
-          ),
-        ),
-        title: Text(
-          transaction.description,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        subtitle: Text(
-          '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  currencyProvider.formatAmount(transaction.amount),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
-                  ),
-                ),
-                Text(
-                  isIncome ? 'Income' : 'Expense',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              icon: Icon(
-                Icons.more_vert,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _showDeleteConfirmation(context, transaction);
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddExpenseScreen(expense: transaction),
-            ),
-          );
-        },
       ),
     );
+    
+    if (result == true) {
+      // Refresh the list if needed
+      setState(() {});
+    }
   }
 
   /// Show delete confirmation dialog
