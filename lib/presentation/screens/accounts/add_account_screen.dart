@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/providers/transaction_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/models/account.dart';
 
 class AddAccountScreen extends StatefulWidget {
@@ -48,9 +48,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           TextButton(
-            onPressed: _isLoading ? null : _saveAccount,
+            onPressed: () => Navigator.pop(context),
             child: Text(
-              'Save',
+              'Cancel',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -79,6 +79,12 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter account name';
+                        }
+                        if (value.trim().length < 2) {
+                          return 'Account name must be at least 2 characters';
+                        }
+                        if (value.trim().length > 50) {
+                          return 'Account name cannot exceed 50 characters';
                         }
                         return null;
                       },
@@ -124,8 +130,15 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter initial balance';
                         }
-                        if (double.tryParse(value) == null) {
+                        final balance = double.tryParse(value);
+                        if (balance == null) {
                           return 'Please enter a valid number';
+                        }
+                        if (balance < 0) {
+                          return 'Asset accounts (Cash/Bank) cannot have negative balances';
+                        }
+                        if (balance > 1000000) {
+                          return 'Balance cannot exceed \$1,000,000';
                         }
                         return null;
                       },
@@ -141,6 +154,31 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _saveAccount,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: Text(
+                          widget.account == null ? 'Create Account' : 'Update Account',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -163,9 +201,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                           const SizedBox(height: 8),
                           _buildAccountTypeInfo('Bank', 'Checking, Savings accounts', Icons.account_balance),
                           _buildAccountTypeInfo('Cash', 'Physical cash and wallets', Icons.money),
-                          _buildAccountTypeInfo('Credit Card', 'Credit cards (liability)', Icons.credit_card),
-                          _buildAccountTypeInfo('Investment', 'Stocks, bonds, mutual funds', Icons.trending_up),
-                          _buildAccountTypeInfo('Liability', 'Loans, debts, other liabilities', Icons.warning),
                         ],
                       ),
                     ),
@@ -200,12 +235,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         return 'Bank Account';
       case AccountType.cash:
         return 'Cash';
-      case AccountType.creditCard:
-        return 'Credit Card (Liability)';
-      case AccountType.investment:
-        return 'Investment';
-      case AccountType.liability:
-        return 'Liability';
     }
   }
 
@@ -230,9 +259,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       );
 
       if (widget.account == null) {
-        await context.read<TransactionProvider>().addAccount(account);
+        await context.read<TransactionProviderHive>().addAccount(account);
       } else {
-        await context.read<TransactionProvider>().updateAccount(account);
+        await context.read<TransactionProviderHive>().updateAccount(account);
       }
 
       if (mounted) {

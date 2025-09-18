@@ -110,14 +110,14 @@ class TransactionProvider with ChangeNotifier {
         final List<dynamic> decoded = json.decode(accountsJson);
         _accounts = decoded.map((json) => Account.fromJson(json)).toList();
       } else {
-        // Create default accounts if none exist
-        _createDefaultAccounts();
+        // Start with empty accounts list - user will create their own
+        _accounts = [];
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading accounts: $e');
       }
-      _createDefaultAccounts(); // Create defaults on error
+      _accounts = []; // Start with empty accounts list on error
     }
   }
 
@@ -308,33 +308,6 @@ class TransactionProvider with ChangeNotifier {
     await _saveAccounts();
   }
 
-  /// Create default accounts for new users
-  void _createDefaultAccounts() {
-    _accounts = [
-      Account(
-        id: _uuid.v4(),
-        name: 'Main Bank Account',
-        balance: 5000.0,
-        type: AccountType.bank,
-        description: 'Primary checking account',
-      ),
-      Account(
-        id: _uuid.v4(),
-        name: 'Cash',
-        balance: 500.0,
-        type: AccountType.cash,
-        description: 'Physical cash',
-      ),
-      Account(
-        id: _uuid.v4(),
-        name: 'Credit Card',
-        balance: 0.0, // Starting with no debt
-        type: AccountType.creditCard,
-        description: 'Credit card account',
-      ),
-    ];
-    _saveAccounts();
-  }
 
   /// Create default categories for new users
   void _createDefaultCategories() {

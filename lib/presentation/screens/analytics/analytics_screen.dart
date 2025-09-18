@@ -6,14 +6,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/currency_provider.dart';
-import '../../../data/providers/transaction_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CurrencyProvider, TransactionProvider>(
+    return Consumer2<CurrencyProvider, TransactionProviderHive>(
       builder: (context, currencyProvider, transactionProvider, child) {
         return Scaffold(
           appBar: AppBar(

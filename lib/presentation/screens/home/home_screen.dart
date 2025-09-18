@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 
 // Data layer imports
 import '../../../data/providers/currency_provider.dart';
-import '../../../data/providers/transaction_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/category.dart' as app_category;
@@ -119,7 +119,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CurrencyProvider, TransactionProvider>(
+    return Consumer2<CurrencyProvider, TransactionProviderHive>(
       builder: (context, currencyProvider, transactionProvider, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -354,7 +354,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
     );
   }
 
-        Widget _buildOverviewTab(BuildContext context, CurrencyProvider currencyProvider, TransactionProvider transactionProvider) {
+        Widget _buildOverviewTab(BuildContext context, CurrencyProvider currencyProvider, TransactionProviderHive transactionProvider) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
       child: Column(

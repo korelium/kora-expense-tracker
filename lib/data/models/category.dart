@@ -4,23 +4,32 @@
 // Date: September 18, 2025
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+
+part 'category.g.dart';
 
 /// Category model for organizing transactions
 /// Used to group and categorize income and expense transactions
-class Category {
+@HiveType(typeId: 5)
+class Category extends HiveObject {
   /// Unique identifier for the category
+  @HiveField(0)
   final String id;
   
   /// Display name of the category
+  @HiveField(1)
   final String name;
   
   /// Icon code for the category (Material Icons codePoint)
+  @HiveField(2)
   final String icon;
   
   /// Type of category (income or expense)
+  @HiveField(3)
   final CategoryType type;
   
   /// Optional color for the category (hex color value as string)
+  @HiveField(4)
   final String? color;
 
   /// Constructor for Category model
@@ -118,10 +127,13 @@ class Category {
 
 /// Enum representing the type of category
 /// Determines whether category is for income or expense transactions
+@HiveType(typeId: 2)
 enum CategoryType {
   /// Income category - for money coming in
+  @HiveField(0)
   income,
   
   /// Expense category - for money going out
+  @HiveField(1)
   expense,
 }

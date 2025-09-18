@@ -3,24 +3,34 @@
 // Author: Pown Kumar - Founder of Korelium
 // Date: September 18, 2025
 
+import 'package:hive/hive.dart';
+
+part 'account.g.dart';
+
 /// Account model representing different types of financial accounts
 /// Supports both assets (bank, cash, investment) and liabilities (credit card)
-class Account {
+@HiveType(typeId: 4)
+class Account extends HiveObject {
   /// Unique identifier for the account
+  @HiveField(0)
   final String id;
   
   /// Display name of the account
+  @HiveField(1)
   final String name;
   
   /// Current balance of the account
   /// For assets: positive balance = money available
   /// For liabilities: positive balance = debt owed
+  @HiveField(2)
   final double balance;
   
   /// Type of account (bank, cash, credit card, etc.)
+  @HiveField(3)
   final AccountType type;
   
   /// Optional description or notes about the account
+  @HiveField(4)
   final String? description;
 
   /// Constructor for Account model
@@ -75,11 +85,11 @@ class Account {
   }
 
   /// Check if this account is a liability (debt)
-  /// Credit cards and liability accounts are considered liabilities
-  bool get isLiability => type == AccountType.creditCard || type == AccountType.liability;
+  /// Since we only have Cash and Bank (both assets), this always returns false
+  bool get isLiability => false;
 
   /// Check if this account is an asset (money owned)
-  /// Bank, cash, and investment accounts are considered assets
+  /// Cash and Bank accounts are both considered assets
   bool get isAsset => !isLiability;
 
   /// Get the effective balance for calculations
@@ -104,20 +114,13 @@ class Account {
 
 /// Enum representing different types of financial accounts
 /// Categorizes accounts into assets and liabilities
+@HiveType(typeId: 1)
 enum AccountType {
   /// Bank account - traditional checking/savings account (Asset)
+  @HiveField(0)
   bank,
   
   /// Cash account - physical cash or petty cash (Asset)
+  @HiveField(1)
   cash,
-  
-  /// Credit card account - credit card debt (Liability)
-  /// Positive balance = amount owed on credit card
-  creditCard,
-  
-  /// Investment account - stocks, bonds, etc. (Asset)
-  investment,
-  
-  /// General liability account - loans, mortgages, etc. (Liability)
-  liability,
 }

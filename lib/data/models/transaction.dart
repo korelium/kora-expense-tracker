@@ -3,28 +3,40 @@
 // Author: Pown Kumar - Founder of Korelium
 // Date: September 18, 2025
 
+import 'package:hive/hive.dart';
+
+part 'transaction.g.dart';
+
 /// Transaction model representing financial transactions (income/expense)
 /// Contains all necessary data for tracking money flow in the app
-class Transaction {
+@HiveType(typeId: 3)
+class Transaction extends HiveObject {
   /// Unique identifier for the transaction
+  @HiveField(0)
   final String id;
   
   /// ID of the account this transaction belongs to
+  @HiveField(1)
   final String accountId;
   
   /// ID of the category this transaction belongs to
+  @HiveField(2)
   final String categoryId;
   
   /// Amount of money involved in the transaction
+  @HiveField(3)
   final double amount;
   
   /// Description or note about the transaction
+  @HiveField(4)
   final String description;
   
   /// Date when the transaction occurred
+  @HiveField(5)
   final DateTime date;
   
   /// Type of transaction (income or expense)
+  @HiveField(6)
   final TransactionType type;
 
   /// Constructor for Transaction model
@@ -105,10 +117,13 @@ class Transaction {
 
 /// Enum representing the type of transaction
 /// Used to categorize financial activities
+@HiveType(typeId: 0)
 enum TransactionType {
   /// Income transaction - money coming in
+  @HiveField(0)
   income,
   
   /// Expense transaction - money going out
+  @HiveField(1)
   expense,
 }

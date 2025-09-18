@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/providers/transaction_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/models/transaction.dart';
+import '../../../data/models/category.dart' as app_category;
 
 class AddExpenseScreen extends StatefulWidget {
   final Transaction? expense;
@@ -61,7 +62,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           ),
         ],
       ),
-      body: Consumer<TransactionProvider>(
+      body: Consumer<TransactionProviderHive>(
         builder: (context, transactionProvider, child) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -95,6 +96,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           onTap: () {
                             setState(() {
                               _selectedType = TransactionType.income;
+                              _selectedCategoryId = null; // Reset category when type changes
                             });
                           },
                           child: Container(
@@ -143,6 +145,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           onTap: () {
                             setState(() {
                               _selectedType = TransactionType.expense;
+                              _selectedCategoryId = null; // Reset category when type changes
                             });
                           },
                           child: Container(
@@ -243,12 +246,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
                   // Category Dropdown
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedCategoryId,
+                    value: _selectedCategoryId,
                     decoration: const InputDecoration(
                       labelText: 'Category',
                       border: OutlineInputBorder(),
                     ),
-                    items: transactionProvider.categories.map((category) {
+                    items: _getFilteredCategories(transactionProvider.categories).map((category) {
                       return DropdownMenuItem(
                         value: category.id,
                         child: Row(
@@ -350,9 +353,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
-  void _saveExpense() {
+  Future<void> _saveExpense() async {
     if (_formKey.currentState!.validate()) {
-      final transactionProvider = context.read<TransactionProvider>();
+      final transactionProvider = context.read<TransactionProviderHive>();
       
       final transaction = Transaction(
         id: widget.expense?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -364,20 +367,43 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         type: _selectedType,
       );
 
-      if (widget.expense == null) {
-        transactionProvider.addTransaction(transaction);
+      try {
+        if (widget.expense == null) {
+          // Adding new transaction
+          await transactionProvider.addTransaction(transaction);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${_selectedType == TransactionType.income ? 'Income' : 'Expense'} added successfully')),
+          );
+        } else {
+          // Updating existing transaction
+          await transactionProvider.updateTransaction(transaction);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${_selectedType == TransactionType.income ? 'Income' : 'Expense'} updated successfully')),
+          );
+        }
+      } catch (e) {
+        // Show error message if transaction fails
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_selectedType == TransactionType.income ? 'Income' : 'Expense'} added successfully')),
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
         );
-      } else {
-        // For now, just add as new transaction (update functionality can be added later)
-        transactionProvider.addTransaction(transaction);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_selectedType == TransactionType.income ? 'Income' : 'Expense'} updated successfully')),
-        );
+        return; // Don't close the screen if there's an error
       }
 
       Navigator.pop(context);
     }
+  }
+
+  /// Get filtered categories based on transaction type
+  List<app_category.Category> _getFilteredCategories(List<app_category.Category> categories) {
+    return categories.where((category) {
+      if (_selectedType == TransactionType.income) {
+        return category.type == app_category.CategoryType.income;
+      } else {
+        return category.type == app_category.CategoryType.expense;
+      }
+    }).toList();
   }
 }

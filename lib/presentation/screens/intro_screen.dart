@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home/home_screen.dart';
 
 /// Introduction screen shown to new users
@@ -162,7 +163,16 @@ class IntroScreen extends StatelessWidget {
   }
 
   /// Navigate to home screen after onboarding
-  void _navigateToHome(BuildContext context) {
+  Future<void> _navigateToHome(BuildContext context) async {
+    try {
+      // Save that user has seen the intro
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_intro', true);
+    } catch (e) {
+      // Continue navigation even if saving fails
+      print('Error saving intro completion: $e');
+    }
+    
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => const HomeScreen(),

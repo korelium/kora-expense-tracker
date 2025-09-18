@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/providers/transaction_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/providers/currency_provider.dart';
 import '../../../data/models/transaction.dart';
 import 'add_expense_screen.dart';
@@ -172,7 +172,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
         ),
       ),
-      body: Consumer2<TransactionProvider, CurrencyProvider>(
+      body: Consumer2<TransactionProviderHive, CurrencyProvider>(
         builder: (context, transactionProvider, currencyProvider, child) {
           final filteredTransactions = _filterTransactions(transactionProvider.transactions);
             
@@ -367,25 +367,54 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              currencyProvider.formatAmount(transaction.amount),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
-              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  currencyProvider.formatAmount(transaction.amount),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                  ),
+                ),
+                Text(
+                  isIncome ? 'Income' : 'Expense',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              isIncome ? 'Income' : 'Expense',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                fontWeight: FontWeight.w500,
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _showDeleteConfirmation(context, transaction);
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -399,5 +428,58 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         },
       ),
     );
+  }
+
+  /// Show delete confirmation dialog
+  void _showDeleteConfirmation(BuildContext context, Transaction transaction) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Transaction'),
+          content: Text(
+            'Are you sure you want to delete "${transaction.description}"?\n\nThis action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteTransaction(context, transaction);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Delete transaction and show confirmation
+  void _deleteTransaction(BuildContext context, Transaction transaction) {
+    final transactionProvider = context.read<TransactionProviderHive>();
+    
+    transactionProvider.deleteTransaction(transaction.id).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transaction "${transaction.description}" deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting transaction: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
   }
 }

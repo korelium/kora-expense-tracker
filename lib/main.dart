@@ -5,20 +5,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Core imports
 import 'core/theme/app_theme.dart';
 
 // Data layer imports
 import 'data/providers/currency_provider.dart';
-import 'data/providers/transaction_provider.dart';
+import 'data/providers/transaction_provider_hive.dart';
 import 'data/providers/theme_provider.dart';
+import 'data/services/hive_database_helper.dart';
 
 // Presentation layer imports
 import 'presentation/screens/intro_screen.dart';
+import 'presentation/screens/home/home_screen.dart';
 
 /// Main application entry point
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Hive database
+  await HiveDatabaseHelper().initialize();
+  
   runApp(const KoraApp());
 }
 
@@ -36,8 +45,8 @@ class KoraApp extends StatelessWidget {
         // Currency management
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         
-        // Transaction, account, and category management
-        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        // Transaction, account, and category management (Hive-based)
+        ChangeNotifierProvider(create: (_) => TransactionProviderHive()),
         
         // Theme management (light/dark mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -59,7 +68,7 @@ class KoraApp extends StatelessWidget {
             themeMode: themeProvider.themeMode, // Current theme mode
             
             // ===== NAVIGATION =====
-            home: const IntroScreen(), // App starts with intro screen
+            home: const AppInitializer(), // App starts with proper initialization
             
             // ===== LOCALIZATION =====
             // TODO: Add localization support for multiple languages
@@ -69,5 +78,56 @@ class KoraApp extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// App initialization widget that determines whether to show intro or home screen
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  bool _isLoading = true;
+  bool _showIntro = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIntroStatus();
+  }
+
+  /// Check if user has completed the intro screen
+  Future<void> _checkIntroStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool hasSeenIntro = prefs.getBool('has_seen_intro') ?? false;
+      
+      setState(() {
+        _showIntro = !hasSeenIntro;
+        _isLoading = false;
+      });
+    } catch (e) {
+      // On error, show intro screen
+      setState(() {
+        _showIntro = true;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return _showIntro ? const IntroScreen() : const HomeScreen();
   }
 }

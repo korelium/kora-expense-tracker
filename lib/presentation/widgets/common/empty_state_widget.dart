@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../screens/transactions/add_expense_screen.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   const EmptyStateWidget({super.key});
@@ -37,8 +38,10 @@ class EmptyStateWidget extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Add transaction feature coming soon!')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddExpenseScreen(),
+                  ),
                 );
               },
               icon: const Icon(Icons.add),
