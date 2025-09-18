@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Core imports
 import 'core/theme/app_theme.dart';
+import 'core/navigation/navigation_controller.dart';
+import 'core/navigation/back_button_handler.dart';
 
 // Data layer imports
 import 'data/providers/currency_provider.dart';
@@ -50,6 +52,9 @@ class KoraApp extends StatelessWidget {
         
         // Theme management (light/dark mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        
+        // Navigation management (smart back button and navigation state)
+        ChangeNotifierProvider(create: (_) => NavigationController()),
       ],
       
       // ===== THEME CONSUMER =====
@@ -68,7 +73,9 @@ class KoraApp extends StatelessWidget {
             themeMode: themeProvider.themeMode, // Current theme mode
             
             // ===== NAVIGATION =====
-            home: const AppInitializer(), // App starts with proper initialization
+            home: const BackButtonHandlerWidget(
+              child: AppInitializer(),
+            ), // App starts with proper initialization
             
             // ===== LOCALIZATION =====
             // TODO: Add localization support for multiple languages

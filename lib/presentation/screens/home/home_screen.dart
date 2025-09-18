@@ -16,6 +16,11 @@ import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/theme_toggle.dart';
 import '../../widgets/common/dashboard_widgets.dart';
 import '../../widgets/recent_transactions_widget.dart';
+import '../../widgets/charts/mini_charts.dart';
+import '../../widgets/common/smart_back_button.dart';
+
+// Navigation imports
+import '../../../core/navigation/navigation_controller.dart';
 
 // Utility imports
 import '../../../core/utils/financial_calculator.dart';
@@ -35,8 +40,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
   final List<Widget> _screens = [
     const HomeContent(),
     const AccountsScreen(),
@@ -46,16 +49,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+    return Consumer<NavigationController>(
+      builder: (context, navigationController, child) {
+        return Scaffold(
+          body: _screens[navigationController.currentBottomNavIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            currentIndex: navigationController.currentBottomNavIndex,
+            onTap: (index) {
+              navigationController.updateBottomNavIndex(index);
+            },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -75,6 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+        );
+      },
     );
   }
 
@@ -121,6 +126,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
+            leading: const SmartAppBarBackButton(),
             title: Row(
               children: [
                 Container(
@@ -158,7 +164,19 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text('Kora Expense Tracker'),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Kora Expense Tracker'),
+                      const SizedBox(height: 2),
+                      SmartNavigationBreadcrumb(
+                        showHomeIcon: false,
+                        textStyle: const TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             actions: [
@@ -295,8 +313,22 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                 ),
               ],
             ),
-            child: TabBar(
-              controller: _tabController,
+            child: Consumer<NavigationController>(
+              builder: (context, navigationController, child) {
+                // Sync tab controller with navigation controller
+                if (_tabController.index != navigationController.currentHomeTabIndex) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _tabController.animateTo(navigationController.currentHomeTabIndex);
+                    }
+                  });
+                }
+                
+                return TabBar(
+                  controller: _tabController,
+                  onTap: (index) {
+                    navigationController.updateHomeTabIndex(index);
+                  },
               indicator: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
@@ -321,6 +353,8 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                 Tab(text: 'Transactions'),
                 Tab(text: 'Analytics'),
               ],
+                );
+              },
             ),
           ),
                     
@@ -334,17 +368,18 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                           // Transactions Tab
                           const ExpenseListScreen(),
                           // Analytics Tab
-                          const AnalyticsScreen(),
+                          _buildAnalyticsTab(context, currencyProvider, transactionProvider),
                         ],
                       ),
                     ),
                   ],
                 ),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: SmartFloatingActionButton(
             onPressed: () {
               _showAddTransactionDialog(context);
             },
             child: const Icon(Icons.add),
+            tooltip: 'Add Transaction',
           ),
         );
       },
@@ -586,6 +621,297 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
         builder: (context) => const AddExpenseScreen(),
       ),
     );
+  }
+
+  /// Build analytics tab for home screen
+  Widget _buildAnalyticsTab(BuildContext context, CurrencyProvider currencyProvider, TransactionProviderHive transactionProvider) {
+    if (transactionProvider.transactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.analytics_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Analytics Available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add some transactions to see your financial insights',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quick Stats Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickStatCard(
+                  context,
+                  'This Month',
+                  currencyProvider.formatAmount(transactionProvider.totalExpense),
+                  Icons.trending_down,
+                  const Color(0xFFEF4444),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickStatCard(
+                  context,
+                  'Savings Rate',
+                  '${_calculateSavingsRate(transactionProvider)}%',
+                  Icons.savings,
+                  const Color(0xFF10B981),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Spending Trend Chart
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.show_chart,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '7-Day Spending Trend',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  MiniLineChart(
+                    transactions: transactionProvider.transactions,
+                    currencySymbol: currencyProvider.currencySymbol,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Category Breakdown
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.pie_chart,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Category Breakdown',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  MiniPieChart(
+                    categories: _getCategoryData(transactionProvider),
+                    currencySymbol: currencyProvider.currencySymbol,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Monthly Comparison
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.bar_chart,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Monthly Comparison',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  MiniBarChart(
+                    transactions: transactionProvider.transactions,
+                    currencySymbol: currencyProvider.currencySymbol,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // View Full Analytics Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // Switch to analytics screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AnalyticsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.analytics),
+              label: const Text('View Full Analytics'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build quick stat card
+  Widget _buildQuickStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Calculate savings rate percentage
+  int _calculateSavingsRate(TransactionProviderHive transactionProvider) {
+    if (transactionProvider.totalIncome == 0) return 0;
+    final savings = transactionProvider.totalIncome - transactionProvider.totalExpense;
+    return ((savings / transactionProvider.totalIncome) * 100).round();
+  }
+
+  /// Get category data for pie chart
+  Map<String, double> _getCategoryData(TransactionProviderHive transactionProvider) {
+    final Map<String, double> categoryTotals = {};
+    
+    for (final transaction in transactionProvider.transactions) {
+      if (transaction.type.toString().contains('expense')) {
+        final category = transactionProvider.getCategory(transaction.categoryId);
+        if (category != null) {
+          final categoryName = category.name;
+          categoryTotals[categoryName] = (categoryTotals[categoryName] ?? 0) + transaction.amount;
+        }
+      }
+    }
+    
+    return categoryTotals;
   }
 
 

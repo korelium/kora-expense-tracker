@@ -26,7 +26,10 @@ class RecentTransactionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recentTransactions = transactions.take(5).toList();
+    // Sort transactions by date (newest first) and take first 5
+    final sortedTransactions = List<Transaction>.from(transactions)
+      ..sort((a, b) => b.date.compareTo(a.date));
+    final recentTransactions = sortedTransactions.take(5).toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
