@@ -9,16 +9,12 @@ import 'package:provider/provider.dart';
 // Data layer imports
 import '../../../data/providers/currency_provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
-import '../../../data/models/transaction.dart';
-import '../../../data/models/account.dart';
-import '../../../data/models/category.dart' as app_category;
 
 // Widget imports
 import '../../widgets/common/currency_selector.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/theme_toggle.dart';
 import '../../widgets/common/dashboard_widgets.dart';
-import '../../widgets/charts/mini_charts.dart';
 
 // Utility imports
 import '../../../core/utils/financial_calculator.dart';
