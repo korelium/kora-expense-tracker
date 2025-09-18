@@ -23,31 +23,41 @@ class Transaction extends HiveObject {
   @HiveField(2)
   final String categoryId;
   
-  /// Amount of money involved in the transaction
+  /// ID of the subcategory this transaction belongs to (optional)
   @HiveField(3)
+  final String? subcategoryId;
+  
+  /// Amount of money involved in the transaction
+  @HiveField(4)
   final double amount;
   
   /// Description or note about the transaction
-  @HiveField(4)
+  @HiveField(5)
   final String description;
   
   /// Date when the transaction occurred
-  @HiveField(5)
+  @HiveField(6)
   final DateTime date;
   
   /// Type of transaction (income or expense)
-  @HiveField(6)
+  @HiveField(7)
   final TransactionType type;
+  
+  /// Path to receipt image (optional)
+  @HiveField(8)
+  final String? receiptImagePath;
 
   /// Constructor for Transaction model
   Transaction({
     required this.id,
     required this.accountId,
     required this.categoryId,
+    this.subcategoryId,
     required this.amount,
     required this.description,
     required this.date,
     required this.type,
+    this.receiptImagePath,
   });
 
   /// Convert Transaction to JSON for storage
@@ -56,10 +66,12 @@ class Transaction extends HiveObject {
       'id': id,
       'accountId': accountId,
       'categoryId': categoryId,
+      'subcategoryId': subcategoryId,
       'amount': amount,
       'description': description,
       'date': date.toIso8601String(),
       'type': type.toString().split('.').last,
+      'receiptImagePath': receiptImagePath,
     };
   }
 
@@ -69,6 +81,7 @@ class Transaction extends HiveObject {
       id: json['id'] ?? '',
       accountId: json['accountId'] ?? '',
       categoryId: json['categoryId'] ?? '',
+      subcategoryId: json['subcategoryId'],
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       description: json['description'] ?? '',
       date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
@@ -76,6 +89,7 @@ class Transaction extends HiveObject {
         (e) => e.toString().split('.').last == json['type'],
         orElse: () => TransactionType.expense, // Default to expense if not found
       ),
+      receiptImagePath: json['receiptImagePath'],
     );
   }
 
@@ -84,19 +98,23 @@ class Transaction extends HiveObject {
     String? id,
     String? accountId,
     String? categoryId,
+    String? subcategoryId,
     double? amount,
     String? description,
     DateTime? date,
     TransactionType? type,
+    String? receiptImagePath,
   }) {
     return Transaction(
       id: id ?? this.id,
       accountId: accountId ?? this.accountId,
       categoryId: categoryId ?? this.categoryId,
+      subcategoryId: subcategoryId ?? this.subcategoryId,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       date: date ?? this.date,
       type: type ?? this.type,
+      receiptImagePath: receiptImagePath ?? this.receiptImagePath,
     );
   }
 

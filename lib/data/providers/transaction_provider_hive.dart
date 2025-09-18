@@ -62,6 +62,7 @@ class TransactionProviderHive with ChangeNotifier {
       // If validation passes, save transaction and update balance
       await _db.addTransaction(transaction);
       await _updateAccountBalance(transaction);
+      await _incrementCategoryUsage(transaction.categoryId);
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
@@ -295,6 +296,21 @@ class TransactionProviderHive with ChangeNotifier {
     return _db.getCategoriesByType(type);
   }
 
+  /// Get main categories (no parent)
+  List<app_category.Category> getMainCategories(app_category.CategoryType type) {
+    return _db.getMainCategories(type);
+  }
+
+  /// Get subcategories for a parent category
+  List<app_category.Category> getSubcategories(String parentId) {
+    return _db.getSubcategories(parentId);
+  }
+
+  /// Get most used categories (for suggestions)
+  List<app_category.Category> getMostUsedCategories(app_category.CategoryType type, {int limit = 5}) {
+    return _db.getMostUsedCategories(type, limit: limit);
+  }
+
   // ===== ANALYTICS METHODS =====
   
   /// Get monthly statistics
@@ -393,6 +409,15 @@ class TransactionProviderHive with ChangeNotifier {
     // Update account with new balance
     final updatedAccount = account.copyWith(balance: newBalance);
     await _db.updateAccount(updatedAccount);
+  }
+
+  /// Increment category usage count
+  Future<void> _incrementCategoryUsage(String categoryId) async {
+    final category = _db.getCategory(categoryId);
+    if (category != null) {
+      final updatedCategory = category.incrementUsage();
+      await _db.updateCategory(updatedCategory);
+    }
   }
 
   /// Reverse account balance when transaction is deleted

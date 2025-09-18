@@ -237,6 +237,29 @@ class HiveDatabaseHelper {
         .toList();
   }
 
+  /// Get main categories (no parent)
+  List<app_category.Category> getMainCategories(app_category.CategoryType type) {
+    return _categoriesBoxRef.values
+        .where((c) => c.type == type && c.parentId == null)
+        .toList();
+  }
+
+  /// Get subcategories for a parent category
+  List<app_category.Category> getSubcategories(String parentId) {
+    return _categoriesBoxRef.values
+        .where((c) => c.parentId == parentId)
+        .toList();
+  }
+
+  /// Get most used categories (for suggestions)
+  List<app_category.Category> getMostUsedCategories(app_category.CategoryType type, {int limit = 5}) {
+    final categories = _categoriesBoxRef.values
+        .where((c) => c.type == type && c.usageCount > 0)
+        .toList();
+    categories.sort((a, b) => b.usageCount.compareTo(a.usageCount));
+    return categories.take(limit).toList();
+  }
+
   // ===== ANALYTICS & STATISTICS =====
   
   /// Get total balance across all accounts
@@ -511,9 +534,315 @@ class HiveDatabaseHelper {
         await _categoriesBoxRef.put(category.id, category);
       }
 
+      // Create default subcategories for most used categories
+      await _createDefaultSubcategories();
+
       if (kDebugMode) {
         print('✅ Created ${incomeCategories.length + expenseCategories.length} default categories');
       }
+    }
+  }
+
+  /// Create default subcategories for most commonly used categories
+  Future<void> _createDefaultSubcategories() async {
+    // Food & Dining subcategories
+    final foodSubcategories = [
+      app_category.Category(
+        id: 'food_restaurants',
+        name: 'Restaurants',
+        icon: 'restaurant',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEF4444',
+        parentId: 'food',
+      ),
+      app_category.Category(
+        id: 'food_groceries',
+        name: 'Groceries',
+        icon: 'shopping_basket',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEF4444',
+        parentId: 'food',
+      ),
+      app_category.Category(
+        id: 'food_fast_food',
+        name: 'Fast Food',
+        icon: 'fastfood',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEF4444',
+        parentId: 'food',
+      ),
+      app_category.Category(
+        id: 'food_coffee',
+        name: 'Coffee & Drinks',
+        icon: 'local_cafe',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEF4444',
+        parentId: 'food',
+      ),
+    ];
+
+    // Transportation subcategories
+    final transportSubcategories = [
+      app_category.Category(
+        id: 'transport_fuel',
+        name: 'Fuel',
+        icon: 'local_gas_station',
+        type: app_category.CategoryType.expense,
+        color: '0xFF6366F1',
+        parentId: 'transport',
+      ),
+      app_category.Category(
+        id: 'transport_public',
+        name: 'Public Transport',
+        icon: 'directions_bus',
+        type: app_category.CategoryType.expense,
+        color: '0xFF6366F1',
+        parentId: 'transport',
+      ),
+      app_category.Category(
+        id: 'transport_taxi',
+        name: 'Taxi & Rideshare',
+        icon: 'local_taxi',
+        type: app_category.CategoryType.expense,
+        color: '0xFF6366F1',
+        parentId: 'transport',
+      ),
+      app_category.Category(
+        id: 'transport_parking',
+        name: 'Parking',
+        icon: 'local_parking',
+        type: app_category.CategoryType.expense,
+        color: '0xFF6366F1',
+        parentId: 'transport',
+      ),
+    ];
+
+    // Shopping subcategories
+    final shoppingSubcategories = [
+      app_category.Category(
+        id: 'shopping_clothing',
+        name: 'Clothing',
+        icon: 'checkroom',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'shopping',
+      ),
+      app_category.Category(
+        id: 'shopping_electronics',
+        name: 'Electronics',
+        icon: 'devices',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'shopping',
+      ),
+      app_category.Category(
+        id: 'shopping_online',
+        name: 'Online Shopping',
+        icon: 'shopping_bag',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'shopping',
+      ),
+      app_category.Category(
+        id: 'shopping_gifts',
+        name: 'Gifts',
+        icon: 'card_giftcard',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'shopping',
+      ),
+    ];
+
+    // Entertainment subcategories
+    final entertainmentSubcategories = [
+      app_category.Category(
+        id: 'entertainment_movies',
+        name: 'Movies & Cinema',
+        icon: 'movie',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEC4899',
+        parentId: 'entertainment',
+      ),
+      app_category.Category(
+        id: 'entertainment_games',
+        name: 'Games & Apps',
+        icon: 'sports_esports',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEC4899',
+        parentId: 'entertainment',
+      ),
+      app_category.Category(
+        id: 'entertainment_subscriptions',
+        name: 'Subscriptions',
+        icon: 'subscriptions',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEC4899',
+        parentId: 'entertainment',
+      ),
+      app_category.Category(
+        id: 'entertainment_sports',
+        name: 'Sports & Fitness',
+        icon: 'fitness_center',
+        type: app_category.CategoryType.expense,
+        color: '0xFFEC4899',
+        parentId: 'entertainment',
+      ),
+    ];
+
+    // Health & Medical subcategories
+    final healthSubcategories = [
+      app_category.Category(
+        id: 'health_doctor',
+        name: 'Doctor & Medical',
+        icon: 'medical_services',
+        type: app_category.CategoryType.expense,
+        color: '0xFF06B6D4',
+        parentId: 'health',
+      ),
+      app_category.Category(
+        id: 'health_pharmacy',
+        name: 'Pharmacy',
+        icon: 'local_pharmacy',
+        type: app_category.CategoryType.expense,
+        color: '0xFF06B6D4',
+        parentId: 'health',
+      ),
+      app_category.Category(
+        id: 'health_gym',
+        name: 'Gym & Fitness',
+        icon: 'fitness_center',
+        type: app_category.CategoryType.expense,
+        color: '0xFF06B6D4',
+        parentId: 'health',
+      ),
+      app_category.Category(
+        id: 'health_insurance',
+        name: 'Health Insurance',
+        icon: 'health_and_safety',
+        type: app_category.CategoryType.expense,
+        color: '0xFF06B6D4',
+        parentId: 'health',
+      ),
+    ];
+
+    // Education subcategories
+    final educationSubcategories = [
+      app_category.Category(
+        id: 'education_books',
+        name: 'Books & Materials',
+        icon: 'menu_book',
+        type: app_category.CategoryType.expense,
+        color: '0xFF8B5CF6',
+        parentId: 'education',
+      ),
+      app_category.Category(
+        id: 'education_courses',
+        name: 'Courses & Training',
+        icon: 'school',
+        type: app_category.CategoryType.expense,
+        color: '0xFF8B5CF6',
+        parentId: 'education',
+      ),
+      app_category.Category(
+        id: 'education_tuition',
+        name: 'Tuition & Fees',
+        icon: 'account_balance',
+        type: app_category.CategoryType.expense,
+        color: '0xFF8B5CF6',
+        parentId: 'education',
+      ),
+      app_category.Category(
+        id: 'education_online',
+        name: 'Online Learning',
+        icon: 'laptop',
+        type: app_category.CategoryType.expense,
+        color: '0xFF8B5CF6',
+        parentId: 'education',
+      ),
+    ];
+
+    // Utilities subcategories
+    final utilitiesSubcategories = [
+      app_category.Category(
+        id: 'utilities_electricity',
+        name: 'Electricity',
+        icon: 'bolt',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'utilities',
+      ),
+      app_category.Category(
+        id: 'utilities_water',
+        name: 'Water',
+        icon: 'water_drop',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'utilities',
+      ),
+      app_category.Category(
+        id: 'utilities_internet',
+        name: 'Internet & Phone',
+        icon: 'wifi',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'utilities',
+      ),
+      app_category.Category(
+        id: 'utilities_gas',
+        name: 'Gas',
+        icon: 'local_gas_station',
+        type: app_category.CategoryType.expense,
+        color: '0xFFF59E0B',
+        parentId: 'utilities',
+      ),
+    ];
+
+    // Income subcategories
+    final salarySubcategories = [
+      app_category.Category(
+        id: 'salary_monthly',
+        name: 'Monthly Salary',
+        icon: 'work',
+        type: app_category.CategoryType.income,
+        color: '0xFF22C55E',
+        parentId: 'salary',
+      ),
+      app_category.Category(
+        id: 'salary_bonus',
+        name: 'Bonus',
+        icon: 'emoji_events',
+        type: app_category.CategoryType.income,
+        color: '0xFF22C55E',
+        parentId: 'salary',
+      ),
+      app_category.Category(
+        id: 'salary_overtime',
+        name: 'Overtime',
+        icon: 'schedule',
+        type: app_category.CategoryType.income,
+        color: '0xFF22C55E',
+        parentId: 'salary',
+      ),
+    ];
+
+    // Add all subcategories to database
+    final allSubcategories = [
+      ...foodSubcategories,
+      ...transportSubcategories,
+      ...shoppingSubcategories,
+      ...entertainmentSubcategories,
+      ...healthSubcategories,
+      ...educationSubcategories,
+      ...utilitiesSubcategories,
+      ...salarySubcategories,
+    ];
+
+    for (final subcategory in allSubcategories) {
+      await _categoriesBoxRef.put(subcategory.id, subcategory);
+    }
+
+    if (kDebugMode) {
+      print('✅ Created ${allSubcategories.length} default subcategories');
     }
   }
 }

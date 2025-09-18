@@ -31,6 +31,22 @@ class Category extends HiveObject {
   /// Optional color for the category (hex color value as string)
   @HiveField(4)
   final String? color;
+  
+  /// Parent category ID (null for main categories, ID for subcategories)
+  @HiveField(5)
+  final String? parentId;
+  
+  /// Notes/description for the category
+  @HiveField(6)
+  final String? notes;
+  
+  /// Usage count for smart suggestions
+  @HiveField(7)
+  final int usageCount;
+  
+  /// Last used date for sorting
+  @HiveField(8)
+  final DateTime? lastUsed;
 
   /// Constructor for Category model
   Category({
@@ -39,6 +55,10 @@ class Category extends HiveObject {
     required this.icon,
     required this.type,
     this.color,
+    this.parentId,
+    this.notes,
+    this.usageCount = 0,
+    this.lastUsed,
   });
 
   /// Convert Category to JSON for storage
@@ -49,6 +69,10 @@ class Category extends HiveObject {
       'icon': icon,
       'type': type.toString().split('.').last,
       'color': color,
+      'parentId': parentId,
+      'notes': notes,
+      'usageCount': usageCount,
+      'lastUsed': lastUsed?.toIso8601String(),
     };
   }
 
@@ -62,7 +86,11 @@ class Category extends HiveObject {
         (e) => e.toString().split('.').last == json['type'],
         orElse: () => CategoryType.expense, // Default to expense if not found
       ),
-        color: json['color'] is String ? json['color'] : Colors.grey.value.toRadixString(16),
+      color: json['color'] is String ? json['color'] : Colors.grey.value.toRadixString(16),
+      parentId: json['parentId'],
+      notes: json['notes'],
+      usageCount: json['usageCount'] ?? 0,
+      lastUsed: json['lastUsed'] != null ? DateTime.parse(json['lastUsed']) : null,
     );
   }
 
@@ -73,6 +101,10 @@ class Category extends HiveObject {
     String? icon,
     CategoryType? type,
     String? color,
+    String? parentId,
+    String? notes,
+    int? usageCount,
+    DateTime? lastUsed,
   }) {
     return Category(
       id: id ?? this.id,
@@ -80,16 +112,59 @@ class Category extends HiveObject {
       icon: icon ?? this.icon,
       type: type ?? this.type,
       color: color ?? this.color,
+      parentId: parentId ?? this.parentId,
+      notes: notes ?? this.notes,
+      usageCount: usageCount ?? this.usageCount,
+      lastUsed: lastUsed ?? this.lastUsed,
     );
   }
 
   /// Get the icon as IconData for UI display
   IconData get iconData {
-    try {
-      return IconData(int.parse(icon), fontFamily: 'MaterialIcons');
-    } catch (e) {
-      return Icons.category; // Fallback icon if parsing fails
-    }
+    // Use a constant map to avoid tree-shaking issues
+    const iconMap = {
+      'restaurant': Icons.restaurant,
+      'directions_car': Icons.directions_car,
+      'shopping_cart': Icons.shopping_cart,
+      'home': Icons.home,
+      'work': Icons.work,
+      'school': Icons.school,
+      'health_and_safety': Icons.health_and_safety,
+      'movie': Icons.movie,
+      'flight': Icons.flight,
+      'fitness_center': Icons.fitness_center,
+      'pets': Icons.pets,
+      'card_giftcard': Icons.card_giftcard,
+      'savings': Icons.savings,
+      'trending_up': Icons.trending_up,
+      'account_balance': Icons.account_balance,
+      'receipt': Icons.receipt,
+      'category': Icons.category,
+      // New subcategory icons
+      'shopping_basket': Icons.shopping_basket,
+      'fastfood': Icons.fastfood,
+      'local_cafe': Icons.local_cafe,
+      'local_gas_station': Icons.local_gas_station,
+      'directions_bus': Icons.directions_bus,
+      'local_taxi': Icons.local_taxi,
+      'local_parking': Icons.local_parking,
+      'checkroom': Icons.checkroom,
+      'devices': Icons.devices,
+      'shopping_bag': Icons.shopping_bag,
+      'sports_esports': Icons.sports_esports,
+      'subscriptions': Icons.subscriptions,
+      'medical_services': Icons.medical_services,
+      'local_pharmacy': Icons.local_pharmacy,
+      'menu_book': Icons.menu_book,
+      'laptop': Icons.laptop,
+      'bolt': Icons.bolt,
+      'water_drop': Icons.water_drop,
+      'wifi': Icons.wifi,
+      'emoji_events': Icons.emoji_events,
+      'schedule': Icons.schedule,
+    };
+    
+    return iconMap[icon] ?? Icons.category;
   }
 
   /// Get the color as Color object for UI display
@@ -109,6 +184,20 @@ class Category extends HiveObject {
 
   /// Check if this is an expense category
   bool get isExpense => type == CategoryType.expense;
+  
+  /// Check if this is a main category (no parent)
+  bool get isMainCategory => parentId == null;
+  
+  /// Check if this is a subcategory (has parent)
+  bool get isSubcategory => parentId != null;
+  
+  /// Increment usage count and update last used date
+  Category incrementUsage() {
+    return copyWith(
+      usageCount: usageCount + 1,
+      lastUsed: DateTime.now(),
+    );
+  }
 
   @override
   String toString() {
