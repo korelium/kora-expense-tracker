@@ -3,6 +3,7 @@
 // Author: Pown Kumar - Founder of Korelium
 // Date: September 18, 2025
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/transaction.dart';
@@ -10,8 +11,8 @@ import '../../data/models/category.dart' as app_category;
 import '../../data/providers/transaction_provider_hive.dart';
 import '../../data/providers/currency_provider.dart';
 
-/// Enhanced Transaction Card Widget
-/// Displays all transaction details in a beautiful, organized layout
+/// Simple Transaction Card Widget - Inspired by Money Manager
+/// Clean, minimal design showing essential transaction details
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
   final VoidCallback? onTap;
@@ -31,234 +32,155 @@ class TransactionCard extends StatelessWidget {
     final isIncome = transaction.type == TransactionType.income;
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surface,
-            Theme.of(context).colorScheme.surfaceContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                // Header Row: Icon, Amount, Type
-                Row(
-                  children: [
-                    // Transaction Icon with Category Color
-                    Consumer<TransactionProviderHive>(
-                      builder: (context, provider, child) {
-                        final category = provider.getCategory(transaction.categoryId);
-                        return Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(category).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _getCategoryColor(category).withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(
-                            _getCategoryIcon(category),
-                            color: _getCategoryColor(category),
-                            size: 24,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    
-                    // Title and Description
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Category Icon
+                Consumer<TransactionProviderHive>(
+                  builder: (context, provider, child) {
+                    final category = provider.getCategory(transaction.categoryId);
+                    return Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _getCategoryColor(category).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _getCategoryIcon(category),
+                        color: _getCategoryColor(category),
+                        size: 20,
+                      ),
+                    );
+                  },
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Transaction Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        transaction.description,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      const SizedBox(height: 2),
+                      
+                      // Category and Account
+                      Row(
                         children: [
                           Text(
-                            transaction.description,
+                            _getCategoryName(context),
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatDate(transaction.date),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          if (transaction.subcategoryId != null) ...[
+                            Text(
+                              ' • ${_getSubcategoryName(context)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 2),
+                      
+                      // Account and Date
+                      Row(
+                        children: [
+                          Text(
+                            _getAccountName(context),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          Text(
+                            ' • ${_formatDate(transaction.date)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    
-                    // Amount and Type
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Consumer<CurrencyProvider>(
-                          builder: (context, currencyProvider, child) {
-                            return Text(
-                              currencyProvider.formatAmount(transaction.amount),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
-                              ),
-                            );
-                          },
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isIncome 
-                                ? const Color(0xFF22C55E).withValues(alpha: 0.1)
-                                : const Color(0xFFEF4444).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isIncome ? 'Income' : 'Expense',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 
-                const SizedBox(height: 12),
-                
-                // Details Row: Account, Category, Subcategory
-                Row(
+                // Amount and Image Icon
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // Account Info
-                    Expanded(
-                      child: _buildDetailChip(
-                        icon: Icons.account_balance,
-                        label: 'Account',
-                        value: _getAccountName(context),
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                    // Amount
+                    Consumer<CurrencyProvider>(
+                      builder: (context, currencyProvider, child) {
+                        return Text(
+                          currencyProvider.formatAmount(transaction.amount),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 8),
                     
-                    // Category Info
-                    Expanded(
-                      child: _buildDetailChip(
-                        icon: Icons.category,
-                        label: 'Category',
-                        value: _getCategoryName(context),
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                // Subcategory Row (if exists)
-                if (transaction.subcategoryId != null) ...[
-                  const SizedBox(height: 8),
-                  _buildDetailChip(
-                    icon: Icons.subdirectory_arrow_right,
-                    label: 'Subcategory',
-                    value: _getSubcategoryName(context),
-                    color: const Color(0xFF06B6D4),
-                    isFullWidth: true,
-                  ),
-                ],
-                
-                // Notes Row (if exists)
-                if (transaction.description.isNotEmpty && transaction.description != transaction.description) ...[
-                  const SizedBox(height: 8),
-                  _buildDetailChip(
-                    icon: Icons.note,
-                    label: 'Notes',
-                    value: transaction.description,
-                    color: const Color(0xFFF59E0B),
-                    isFullWidth: true,
-                    maxLines: 2,
-                  ),
-                ],
-                
-                // Footer Row: Receipt Icon, Actions
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // Receipt Image Indicator
+                    const SizedBox(height: 4),
+                    
+                    // Image Icon (if receipt exists)
                     if (transaction.receiptImagePath != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      GestureDetector(
+                        onTap: () => _showImagePreview(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            Icons.image,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.receipt,
-                              size: 14,
-                              color: const Color(0xFF10B981),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Receipt',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF10B981),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    
-                    const Spacer(),
-                    
-                    // Action Buttons
-                    if (onEdit != null || onDelete != null)
+                      )
+                    else
+                      // Action Menu
                       PopupMenuButton<String>(
                         icon: Icon(
                           Icons.more_vert,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                         onSelected: (value) {
                           if (value == 'edit' && onEdit != null) {
@@ -273,7 +195,7 @@ class TransactionCard extends StatelessWidget {
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit, color: Colors.blue),
+                                  Icon(Icons.edit, color: Colors.blue, size: 16),
                                   SizedBox(width: 8),
                                   Text('Edit'),
                                 ],
@@ -284,7 +206,7 @@ class TransactionCard extends StatelessWidget {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete, color: Colors.red),
+                                  Icon(Icons.delete, color: Colors.red, size: 16),
                                   SizedBox(width: 8),
                                   Text('Delete'),
                                 ],
@@ -302,62 +224,80 @@ class TransactionCard extends StatelessWidget {
     );
   }
 
-  /// Build detail chip for account, category, etc.
-  Widget _buildDetailChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    bool isFullWidth = false,
-    int maxLines = 1,
-  }) {
-    return Container(
-      width: isFullWidth ? double.infinity : null,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
+  /// Show image preview dialog
+  void _showImagePreview(BuildContext context) {
+    if (transaction.receiptImagePath == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Receipt Image',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Image
+              Flexible(
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(transaction.receiptImagePath!),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error, size: 48, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Image not found'),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: color.withValues(alpha: 0.8),
-                  ),
-                  maxLines: maxLines,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
