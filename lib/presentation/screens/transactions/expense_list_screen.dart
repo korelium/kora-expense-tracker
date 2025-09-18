@@ -106,66 +106,71 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
+          preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search transactions...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // Compact Search Bar
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                // Filter Chips
-                SizedBox(
-                  height: 40,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _filterOptions.length,
-                    itemBuilder: (context, index) {
-                      final option = _filterOptions[index];
-                      final isSelected = _selectedFilter == option;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(option),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedFilter = option;
-                            });
-                          },
-                          backgroundColor: Theme.of(context).colorScheme.surface,
-                          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                          checkmarkColor: Theme.of(context).colorScheme.primary,
-                        ),
-                      );
+                    style: const TextStyle(fontSize: 14),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
                     },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Compact Filter Dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedFilter,
+                      isDense: true,
+                      style: const TextStyle(fontSize: 14),
+                      items: _filterOptions.map((filter) {
+                        return DropdownMenuItem<String>(
+                          value: filter,
+                          child: Text(filter),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedFilter = value ?? 'All';
+                        });
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -216,36 +221,16 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
 
           return Column(
             children: [
-              // Summary Card - Enhanced for Dark Theme
+              // Compact Summary Card
               Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.surfaceContainer,
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                    width: 1,
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,

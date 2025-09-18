@@ -28,7 +28,7 @@ class TransactionCard extends StatelessWidget {
     final isIncome = transaction.type == TransactionType.income;
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
