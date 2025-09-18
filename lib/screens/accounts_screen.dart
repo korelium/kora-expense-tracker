@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/currency_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../models/account.dart';
 import 'add_account_screen.dart';
 
 class AccountsScreen extends StatelessWidget {
