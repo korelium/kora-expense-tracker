@@ -266,8 +266,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     return TransactionCard(
                       transaction: transaction,
                       onTap: () => _editTransaction(context, transaction),
-                      onEdit: () => _editTransaction(context, transaction),
-                      onDelete: () => _showDeleteConfirmation(context, transaction),
                     );
                   },
                 ),

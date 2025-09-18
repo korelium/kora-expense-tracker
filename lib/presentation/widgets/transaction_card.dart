@@ -16,15 +16,11 @@ import '../../data/providers/currency_provider.dart';
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
 
   const TransactionCard({
     super.key,
     required this.transaction,
     this.onTap,
-    this.onEdit,
-    this.onDelete,
   });
 
   @override
@@ -173,46 +169,6 @@ class TransactionCard extends StatelessWidget {
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                      )
-                    else
-                      // Action Menu
-                      PopupMenuButton<String>(
-                        icon: Icon(
-                          Icons.more_vert,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'edit' && onEdit != null) {
-                            onEdit!();
-                          } else if (value == 'delete' && onDelete != null) {
-                            onDelete!();
-                          }
-                        },
-                        itemBuilder: (BuildContext context) => [
-                          if (onEdit != null)
-                            const PopupMenuItem<String>(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit, color: Colors.blue, size: 16),
-                                  SizedBox(width: 8),
-                                  Text('Edit'),
-                                ],
-                              ),
-                            ),
-                          if (onDelete != null)
-                            const PopupMenuItem<String>(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete, color: Colors.red, size: 16),
-                                  SizedBox(width: 8),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                        ],
                       ),
                   ],
                 ),
