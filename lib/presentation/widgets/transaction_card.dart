@@ -93,7 +93,8 @@ class TransactionCard extends StatelessWidget {
                             _getCategoryName(context),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           if (transaction.subcategoryId != null) ...[
@@ -101,7 +102,8 @@ class TransactionCard extends StatelessWidget {
                               ' • ${_getSubcategoryName(context)}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -118,6 +120,7 @@ class TransactionCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                           Text(
@@ -125,6 +128,7 @@ class TransactionCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
