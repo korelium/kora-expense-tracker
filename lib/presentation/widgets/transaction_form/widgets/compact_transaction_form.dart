@@ -367,24 +367,60 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
 
   /// Account selection card
   Widget _buildAccountCard(TransactionProviderHive transactionProvider) {
+    // Validate account selection when accounts change
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final availableAccountIds = transactionProvider.accounts.map((a) => a.id).toList();
+      _controller.validateAccountSelection(availableAccountIds);
+    });
+
+    // Get valid account ID (null if account doesn't exist)
+    final validAccountId = _controller.selectedAccountId != null && 
+        transactionProvider.accounts.any((a) => a.id == _controller.selectedAccountId) 
+        ? _controller.selectedAccountId 
+        : null;
+
     return _buildInfoCard(
       title: 'Account',
       icon: Icons.account_balance_wallet,
       child: DropdownButtonFormField<String>(
-        value: _controller.selectedAccountId,
+        value: validAccountId,
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         isExpanded: true,
         menuMaxHeight: 200,
+        dropdownColor: Colors.white,
+        style: TextStyle(
+          color: AppTheme.lightText,
+          fontSize: 16,
+        ),
         items: transactionProvider.accounts.map((account) {
           return DropdownMenuItem<String>(
             value: account.id,
-            child: Text(
-              account.name,
-              style: const TextStyle(fontSize: 14),
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  account.type.toString() == 'AccountType.bank'
+                      ? Icons.account_balance
+                      : account.type.toString() == 'AccountType.creditCard'
+                          ? Icons.credit_card
+                          : Icons.money,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${account.name} - ${context.read<CurrencyProvider>().currencySymbol}${account.balance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: account.balance >= 0 ? Colors.black87 : Colors.red,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           );
         }).toList(),

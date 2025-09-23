@@ -49,6 +49,14 @@ class TransactionFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Validate and reset account selection if account no longer exists
+  void validateAccountSelection(List<String> availableAccountIds) {
+    if (_selectedAccountId != null && !availableAccountIds.contains(_selectedAccountId)) {
+      _selectedAccountId = null;
+      notifyListeners();
+    }
+  }
+
   /// Initialize form with initial type
   void initializeWithType(TransactionType type) {
     _selectedType = type;
