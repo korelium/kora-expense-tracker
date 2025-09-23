@@ -536,5 +536,25 @@ class TransactionProviderHive with ChangeNotifier {
     // Update account with reversed balance
     final updatedAccount = account.copyWith(balance: newBalance);
     await _db.updateAccount(updatedAccount);
+    
+    // If this is a credit card account, also update the credit card balance
+    if (account.type == AccountType.creditCard) {
+      try {
+        // Get credit card from database directly
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == account.id).toList();
+        
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: newBalance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+      } catch (e) {
+        // If credit card update fails, just log the error
+        if (kDebugMode) {
+          print('Error updating credit card balance on deletion: $e');
+        }
+      }
+    }
   }
 }
