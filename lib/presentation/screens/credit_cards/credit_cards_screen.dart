@@ -1,7 +1,7 @@
 // File location: lib/presentation/screens/credit_cards/credit_cards_screen.dart
 // Purpose: Main credit cards screen showing all credit cards
 // Author: Pown Kumar - Founder of Korelium
-// Date: December 19, 2024
+// Date: September 23, 2025
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -1,7 +1,7 @@
 // File location: lib/data/models/credit_card.dart
 // Purpose: Credit card data model for managing credit card accounts
 // Author: Pown Kumar - Founder of Korelium
-// Date: December 19, 2024
+// Date: September 23, 2025
 
 import 'package:hive/hive.dart';
 

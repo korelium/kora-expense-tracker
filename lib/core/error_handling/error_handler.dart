@@ -1,7 +1,7 @@
 // File location: lib/core/error_handling/error_handler.dart
 // Purpose: Centralized error handling and user-friendly error messages
 // Author: Pown Kumar - Founder of Korelium
-// Date: December 19, 2024
+// Date: September 23, 2025
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';

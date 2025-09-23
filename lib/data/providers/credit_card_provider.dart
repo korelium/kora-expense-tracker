@@ -1,7 +1,7 @@
 // File location: lib/data/providers/credit_card_provider.dart
 // Purpose: Credit card provider for managing credit card state and operations
 // Author: Pown Kumar - Founder of Korelium
-// Date: December 19, 2024
+// Date: September 23, 2025
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
