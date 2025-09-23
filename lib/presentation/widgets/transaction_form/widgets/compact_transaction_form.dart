@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../data/models/transaction.dart';
 import '../../../../data/models/category.dart' as app_category;
 import '../../../../data/providers/transaction_provider_hive.dart';
+import '../../../../data/providers/currency_provider.dart';
 import '../controllers/transaction_form_controller.dart';
 
 /// Compact Transaction Form
@@ -305,7 +306,7 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
                       ),
                     ),
                     child: Text(
-                      '₹${amount.toStringAsFixed(0)}',
+                      '${context.read<CurrencyProvider>().currencySymbol}${amount.toStringAsFixed(0)}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w500,

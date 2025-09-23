@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../data/models/account.dart';
+import '../../../../data/providers/currency_provider.dart';
 
 /// Account Selector Widget
 /// Provides account selection with balance display
@@ -65,7 +67,7 @@ class AccountSelector extends StatelessWidget {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '${account.name} - ₹${account.balance.toStringAsFixed(2)}',
+                          '${account.name} - ${context.read<CurrencyProvider>().currencySymbol}${account.balance.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             color: account.balance >= 0 ? Colors.black87 : Colors.red,

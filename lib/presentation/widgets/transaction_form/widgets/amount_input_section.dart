@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../data/providers/currency_provider.dart';
 
 /// Amount Input Section Widget
 /// Provides amount input with quick amount buttons
@@ -89,7 +91,7 @@ class AmountInputSection extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '₹${amount.toStringAsFixed(0)}',
+                      '${context.read<CurrencyProvider>().currencySymbol}${amount.toStringAsFixed(0)}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w500,

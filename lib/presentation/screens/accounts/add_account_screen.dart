@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
+import '../../../data/providers/currency_provider.dart';
 import '../../../data/models/account.dart';
 
 class AddAccountScreen extends StatefulWidget {
@@ -119,11 +120,11 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     // Initial Balance
                     TextFormField(
                       controller: _balanceController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Initial Balance',
                         hintText: '0.00',
-                        border: OutlineInputBorder(),
-                        prefixText: '\$ ',
+                        border: const OutlineInputBorder(),
+                        prefixText: '${context.read<CurrencyProvider>().currencySymbol} ',
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -138,7 +139,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                           return 'Asset accounts (Cash/Bank) cannot have negative balances';
                         }
                         if (balance > 1000000) {
-                          return 'Balance cannot exceed \$1,000,000';
+                          return 'Balance cannot exceed ${context.read<CurrencyProvider>().currencySymbol}1,000,000';
                         }
                         return null;
                       },

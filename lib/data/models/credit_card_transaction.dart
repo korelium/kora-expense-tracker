@@ -184,7 +184,7 @@ class CreditCardTransaction extends HiveObject {
   /// Get formatted amount with sign
   String get formattedAmount {
     final sign = isPayment || isRefund ? '+' : '-';
-    return '$sign\$${amount.abs().toStringAsFixed(2)}';
+    return '$sign${amount.abs().toStringAsFixed(2)}';
   }
 
   /// Get display name for the transaction

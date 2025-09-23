@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/credit_card_provider.dart';
+import '../../../data/providers/currency_provider.dart';
 import '../../../data/models/credit_card.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -77,8 +78,8 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           ],
         ),
       ),
-      body: Consumer<CreditCardProvider>(
-        builder: (context, creditCardProvider, child) {
+      body: Consumer2<CreditCardProvider, CurrencyProvider>(
+        builder: (context, creditCardProvider, currencyProvider, child) {
           if (creditCardProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(
@@ -92,9 +93,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildOverviewTab(transactions),
+              _buildOverviewTab(transactions, currencyProvider),
               _buildTransactionsTab(transactions),
-              _buildAnalyticsTab(transactions),
+              _buildAnalyticsTab(transactions, currencyProvider),
             ],
           );
         },
@@ -102,7 +103,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     );
   }
 
-  Widget _buildCreditCardHeader() {
+  Widget _buildCreditCardHeader(CurrencyProvider currencyProvider) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -174,7 +175,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               Expanded(
                 child: _buildCompactBalanceCard(
                   'Current Balance',
-                  widget.creditCard.formattedCurrentBalance('\$'),
+                  widget.creditCard.formattedCurrentBalance(currencyProvider.currencySymbol),
                   Colors.red[100]!,
                   Colors.red[800]!,
                 ),
@@ -183,7 +184,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               Expanded(
                 child: _buildCompactBalanceCard(
                   'Available Credit',
-                  widget.creditCard.formattedAvailableCredit('\$'),
+                  widget.creditCard.formattedAvailableCredit(currencyProvider.currencySymbol),
                   Colors.green[100]!,
                   Colors.green[800]!,
                 ),
@@ -259,7 +260,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     );
   }
 
-  Widget _buildKeyInfo() {
+  Widget _buildKeyInfo(CurrencyProvider currencyProvider) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
@@ -271,7 +272,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       child: Row(
         children: [
           Expanded(
-            child: _buildKeyInfoItem('Limit', widget.creditCard.formattedCreditLimit('\$')),
+            child: _buildKeyInfoItem('Limit', widget.creditCard.formattedCreditLimit(currencyProvider.currencySymbol)),
           ),
           Container(
             width: 1,
@@ -575,15 +576,15 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   }
 
   // Tab Methods
-  Widget _buildOverviewTab(List transactions) {
+  Widget _buildOverviewTab(List transactions, CurrencyProvider currencyProvider) {
     return RefreshIndicator(
       onRefresh: () => context.read<CreditCardProvider>().refresh(),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            _buildCreditCardHeader(),
-            _buildKeyInfo(),
+            _buildCreditCardHeader(currencyProvider),
+            _buildKeyInfo(currencyProvider),
             _buildQuickActions(),
             _buildRecentTransactionsPreview(transactions),
             const SizedBox(height: 16),
@@ -600,14 +601,14 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     );
   }
 
-  Widget _buildAnalyticsTab(List transactions) {
+  Widget _buildAnalyticsTab(List transactions, CurrencyProvider currencyProvider) {
     return RefreshIndicator(
       onRefresh: () => context.read<CreditCardProvider>().refresh(),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            _buildAnalyticsOverview(),
+            _buildAnalyticsOverview(currencyProvider),
             _buildSpendingByCategory(transactions),
             _buildMonthlyTrends(transactions),
             const SizedBox(height: 16),
@@ -693,7 +694,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     );
   }
 
-  Widget _buildAnalyticsOverview() {
+  Widget _buildAnalyticsOverview(CurrencyProvider currencyProvider) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -719,7 +720,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               Expanded(
                 child: _buildAnalyticsCard(
                   'This Month',
-                  '\$${widget.creditCard.currentBalance.abs().toStringAsFixed(2)}',
+                  '${currencyProvider.currencySymbol}${widget.creditCard.currentBalance.abs().toStringAsFixed(2)}',
                   Icons.trending_up,
                   Colors.red,
                 ),
@@ -728,7 +729,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               Expanded(
                 child: _buildAnalyticsCard(
                   'Avg Daily',
-                  '\$${(widget.creditCard.currentBalance.abs() / 30).toStringAsFixed(2)}',
+                  '${currencyProvider.currencySymbol}${(widget.creditCard.currentBalance.abs() / 30).toStringAsFixed(2)}',
                   Icons.calendar_today,
                   Colors.blue,
                 ),
