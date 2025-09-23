@@ -282,10 +282,20 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
             child: DropdownButton<int>(
               value: _selectedDueDay,
               isExpanded: true,
+              style: TextStyle(
+                color: AppTheme.lightText,
+                fontSize: 16,
+              ),
               items: List.generate(31, (index) => index + 1)
                   .map((day) => DropdownMenuItem<int>(
                         value: day,
-                        child: Text('$day'),
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            color: AppTheme.lightText,
+                            fontSize: 16,
+                          ),
+                        ),
                       ))
                   .toList(),
               onChanged: (value) {
@@ -382,6 +392,10 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
           maxLength: maxLength,
           maxLines: maxLines,
           validator: validator,
+          style: TextStyle(
+            color: AppTheme.lightText,
+            fontSize: 16,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(

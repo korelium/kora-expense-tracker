@@ -5,6 +5,7 @@ import '../../../../data/models/transaction.dart';
 import '../../../../data/models/category.dart' as app_category;
 import '../../../../data/providers/transaction_provider_hive.dart';
 import '../../../../data/providers/currency_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../controllers/transaction_form_controller.dart';
 
 /// Compact Transaction Form
@@ -231,6 +232,10 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         // Title input (compact)
         TextFormField(
           controller: _controller.descriptionController,
+          style: TextStyle(
+            color: AppTheme.lightText,
+            fontSize: 16,
+          ),
           decoration: InputDecoration(
             hintText: 'Enter transaction title',
             border: OutlineInputBorder(
@@ -250,7 +255,8 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         // Large amount input
         TextFormField(
           controller: _controller.amountController,
-          style: const TextStyle(
+          style: TextStyle(
+            color: AppTheme.lightText,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -621,6 +627,10 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           const SizedBox(height: 12),
           TextFormField(
             maxLines: 4,
+            style: TextStyle(
+              color: AppTheme.lightText,
+              fontSize: 14,
+            ),
             decoration: const InputDecoration(
               hintText: 'Add any additional notes about this transaction...',
               border: OutlineInputBorder(
@@ -628,7 +638,6 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
               ),
               contentPadding: EdgeInsets.all(12),
             ),
-            style: const TextStyle(fontSize: 14),
           ),
         ],
       ),

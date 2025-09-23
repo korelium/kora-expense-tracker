@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/providers/currency_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 /// Amount Input Section Widget
 /// Provides amount input with quick amount buttons
@@ -35,6 +36,11 @@ class AmountInputSection extends StatelessWidget {
         // Amount Input
         TextFormField(
           controller: amountController,
+          style: TextStyle(
+            color: AppTheme.lightText,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
           decoration: InputDecoration(
             hintText: '0.00',
             border: OutlineInputBorder(
