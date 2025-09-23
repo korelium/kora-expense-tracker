@@ -44,10 +44,10 @@ class CreditCardProvider extends ChangeNotifier {
   /// Get total available credit across all active cards
   double get totalAvailableCredit => totalCreditLimit - totalCurrentBalance;
   
-  /// Get average credit utilization across all active cards
+  /// Get average credit utilization across all active cards (hides negative sign)
   double get averageCreditUtilization {
     if (activeCreditCards.isEmpty) return 0.0;
-    final totalUtilization = activeCreditCards.fold(0.0, (sum, card) => sum + card.creditUtilization);
+    final totalUtilization = activeCreditCards.fold(0.0, (sum, card) => sum + card.creditUtilization.abs());
     return totalUtilization / activeCreditCards.length;
   }
 

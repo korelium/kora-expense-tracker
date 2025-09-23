@@ -34,9 +34,9 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightBackground,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Credit Cards',
           style: TextStyle(
             color: Colors.white,
@@ -157,9 +157,9 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -191,7 +191,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   title,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.lightText.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -224,9 +224,9 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -250,7 +250,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
             title,
             style: TextStyle(
               fontSize: 10,
-              color: AppTheme.lightText.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -278,12 +278,12 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Your Credit Cards',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppTheme.lightText,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 16),
@@ -297,9 +297,9 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
   Widget _buildCompactCreditCardCard(CreditCard creditCard, CreditCardProvider creditCardProvider, CurrencyProvider currencyProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -335,10 +335,10 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   Expanded(
                     child: Text(
                       creditCard.displayName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightText,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -381,7 +381,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                 creditCard.bankName,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.lightText.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -407,8 +407,8 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   ),
                   child: Text(
                     creditCard.isOverdue ? 'Overdue' : 'Due Soon',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
@@ -431,7 +431,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AppTheme.lightText.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -456,7 +456,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: AppTheme.lightText.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -480,7 +480,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
           Icon(
             creditCardTransaction.isPurchase ? Icons.shopping_cart : Icons.payment,
             size: 16,
-            color: AppTheme.lightText.withOpacity(0.6),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -488,7 +488,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               creditCardTransaction.displayName,
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.lightText.withOpacity(0.8),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -527,12 +527,12 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No Credit Cards Yet',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.lightText,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -541,7 +541,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.lightText.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 32),
@@ -591,7 +591,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.lightText.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 24),

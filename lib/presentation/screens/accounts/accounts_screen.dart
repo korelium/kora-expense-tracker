@@ -54,15 +54,15 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
             backgroundColor: Theme.of(context).colorScheme.surface,
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
-            actions: [
-              // Fix negative balances button (only show if there are negative balances)
-              if (transactionProvider.accounts.any((account) => account.balance < 0))
-                IconButton(
-                  icon: const Icon(Icons.warning_amber),
-                  tooltip: 'Fix Negative Balances',
-                  onPressed: () => _fixNegativeBalances(context, transactionProvider),
-                ),
-            ],
+            // actions: [
+            //   // Fix negative balances button (only show if there are negative balances)
+            //   if (transactionProvider.accounts.any((account) => account.balance < 0))
+            //     IconButton(
+            //       icon: const Icon(Icons.warning_amber),
+            //       tooltip: 'Fix Negative Balances',
+            //       onPressed: () => _fixNegativeBalances(context, transactionProvider),
+            //     ),
+            // ],
           ),
           body: transactionProvider.accounts.isEmpty
               ? Center(
@@ -522,9 +522,9 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.lightBorder),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -566,17 +566,17 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
                           children: [
                             Text(
                               creditCard.displayName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.lightText,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             Text(
                               creditCard.bankName,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: AppTheme.lightText.withOpacity(0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -792,7 +792,7 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AppTheme.lightText.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontWeight: FontWeight.w500,
           ),
         ),

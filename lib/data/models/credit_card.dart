@@ -291,8 +291,8 @@ class CreditCard extends HiveObject {
   /// Get formatted available credit
   String formattedAvailableCredit(String currencySymbol) => '$currencySymbol${availableCredit.toStringAsFixed(2)}';
 
-  /// Get formatted credit utilization
-  String get formattedCreditUtilization => '${creditUtilization.toStringAsFixed(1)}%';
+  /// Get formatted credit utilization (hides negative sign)
+  String get formattedCreditUtilization => '${creditUtilization.abs().toStringAsFixed(1)}%';
 
   @override
   String toString() {

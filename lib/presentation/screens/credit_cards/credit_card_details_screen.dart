@@ -45,11 +45,11 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightBackground,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(
           widget.creditCard.displayName,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -127,7 +127,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.credit_card,
                 color: Colors.white,
                 size: 20,
@@ -136,7 +136,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               Expanded(
                 child: Text(
                   widget.creditCard.displayName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -152,7 +152,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
                   ),
                   child: Text(
                     widget.creditCard.isOverdue ? 'Overdue' : 'Due Soon',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -265,9 +265,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -277,7 +277,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Container(
             width: 1,
             height: 20,
-            color: AppTheme.lightBorder,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
             child: _buildKeyInfoItem('Rate', '${widget.creditCard.interestRate.toStringAsFixed(2)}%'),
@@ -285,7 +285,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Container(
             width: 1,
             height: 20,
-            color: AppTheme.lightBorder,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
             child: _buildKeyInfoItem('Due', '${widget.creditCard.dueDay}'),
@@ -293,7 +293,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Container(
             width: 1,
             height: 20,
-            color: AppTheme.lightBorder,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
             child: _buildKeyInfoItem('Utilization', widget.creditCard.formattedCreditUtilization),
@@ -310,16 +310,16 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           label,
           style: TextStyle(
             fontSize: 10,
-            color: AppTheme.lightText.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppTheme.lightText,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
           textAlign: TextAlign.center,
@@ -336,17 +336,17 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -423,16 +423,16 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.lightBorder),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           children: [
             Icon(
               Icons.receipt_long,
               size: 32,
-              color: AppTheme.lightText.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -440,7 +440,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.lightText.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 4),
@@ -448,7 +448,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               'Add your first transaction to start tracking',
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.lightText.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
           ],
@@ -459,9 +459,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,12 +470,12 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                const Text(
+                Text(
                   'Recent Transactions',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.lightText,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -483,7 +483,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
                   '${transactions.length}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.lightText.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -517,7 +517,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.lightBorder.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
             width: 0.5,
           ),
         ),
@@ -545,10 +545,10 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               children: [
                 Text(
                   transaction.displayName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.lightText,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -556,7 +556,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
                   _formatDate(transaction.transactionDate),
                   style: TextStyle(
                     fontSize: 10,
-                    color: AppTheme.lightText.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -624,16 +624,16 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.lightBorder),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           children: [
             Icon(
               Icons.receipt_long,
               size: 32,
-              color: AppTheme.lightText.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -641,7 +641,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.lightText.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ],
@@ -652,9 +652,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,12 +663,12 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                const Text(
+                Text(
                   'Recent Transactions',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.lightText,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -699,19 +699,19 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Spending Overview',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -757,7 +757,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             title,
             style: TextStyle(
               fontSize: 12,
-              color: AppTheme.lightText.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -780,38 +780,38 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Spending by Category',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
           if (transactions.isEmpty)
-            const Center(
+            Center(
               child: Text(
                 'No spending data available',
                 style: TextStyle(
-                  color: AppTheme.lightText,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
             )
           else
-            const Center(
+            Center(
               child: Text(
                 'Category breakdown coming soon!',
                 style: TextStyle(
-                  color: AppTheme.lightText,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
@@ -826,38 +826,38 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.lightBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Monthly Trends',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
           if (transactions.isEmpty)
-            const Center(
+            Center(
               child: Text(
                 'No trend data available',
                 style: TextStyle(
-                  color: AppTheme.lightText,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
             )
           else
-            const Center(
+            Center(
               child: Text(
                 'Trend charts coming soon!',
                 style: TextStyle(
-                  color: AppTheme.lightText,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
