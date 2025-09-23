@@ -446,25 +446,10 @@ class RecentTransactionsWidget extends StatelessWidget {
 
   /// Get category icon
   IconData _getCategoryIcon(app_category.Category? category) {
-    if (category == null) return Icons.category;
+    if (category == null) return Icons.category_outlined;
     
-    // Map of icon strings to IconData
-    const iconMap = {
-      'food': Icons.restaurant,
-      'transport': Icons.directions_car,
-      'shopping': Icons.shopping_bag,
-      'entertainment': Icons.movie,
-      'health': Icons.health_and_safety,
-      'education': Icons.school,
-      'utilities': Icons.electrical_services,
-      'salary': Icons.work,
-      'freelance': Icons.computer,
-      'investment': Icons.trending_up,
-      'gift': Icons.card_giftcard,
-      'other': Icons.category,
-    };
-    
-    return iconMap[category.icon] ?? Icons.category;
+    // Use the same icon mapping as the Category model
+    return category.iconData;
   }
 
   /// Format date for display

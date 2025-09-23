@@ -123,48 +123,67 @@ class Category extends HiveObject {
   IconData get iconData {
     // Use a constant map to avoid tree-shaking issues
     const iconMap = {
-      'restaurant': Icons.restaurant,
-      'directions_car': Icons.directions_car,
-      'shopping_cart': Icons.shopping_cart,
-      'home': Icons.home,
-      'work': Icons.work,
-      'school': Icons.school,
-      'health_and_safety': Icons.health_and_safety,
-      'movie': Icons.movie,
-      'flight': Icons.flight,
-      'fitness_center': Icons.fitness_center,
-      'pets': Icons.pets,
-      'card_giftcard': Icons.card_giftcard,
-      'savings': Icons.savings,
-      'trending_up': Icons.trending_up,
-      'account_balance': Icons.account_balance,
-      'receipt': Icons.receipt,
-      'category': Icons.category,
-      // New subcategory icons
-      'shopping_basket': Icons.shopping_basket,
-      'fastfood': Icons.fastfood,
-      'local_cafe': Icons.local_cafe,
-      'local_gas_station': Icons.local_gas_station,
-      'directions_bus': Icons.directions_bus,
-      'local_taxi': Icons.local_taxi,
-      'local_parking': Icons.local_parking,
-      'checkroom': Icons.checkroom,
-      'devices': Icons.devices,
-      'shopping_bag': Icons.shopping_bag,
-      'sports_esports': Icons.sports_esports,
-      'subscriptions': Icons.subscriptions,
-      'medical_services': Icons.medical_services,
-      'local_pharmacy': Icons.local_pharmacy,
-      'menu_book': Icons.menu_book,
-      'laptop': Icons.laptop,
-      'bolt': Icons.bolt,
-      'water_drop': Icons.water_drop,
-      'wifi': Icons.wifi,
-      'emoji_events': Icons.emoji_events,
-      'schedule': Icons.schedule,
+      // Income Categories
+      'work': Icons.work_outline,
+      'laptop': Icons.laptop_mac_outlined,
+      'trending_up': Icons.trending_up_outlined,
+      'card_giftcard': Icons.card_giftcard_outlined,
+      'category': Icons.category_outlined,
+      
+      // Expense Categories
+      'restaurant': Icons.restaurant_outlined,
+      'shopping_cart': Icons.shopping_cart_outlined,
+      'directions_car': Icons.directions_car_outlined,
+      'movie': Icons.movie_outlined,
+      'health_and_safety': Icons.health_and_safety_outlined,
+      'school': Icons.school_outlined,
+      'flight': Icons.flight_outlined,
+      'electrical_services': Icons.electrical_services_outlined,
+      
+      // Food & Dining Subcategories
+      'shopping_basket': Icons.shopping_basket_outlined,
+      'fastfood': Icons.fastfood_outlined,
+      'local_cafe': Icons.local_cafe_outlined,
+      
+      // Transportation Subcategories
+      'local_gas_station': Icons.local_gas_station_outlined,
+      'directions_bus': Icons.directions_bus_outlined,
+      'local_taxi': Icons.local_taxi_outlined,
+      'local_parking': Icons.local_parking_outlined,
+      
+      // Shopping Subcategories
+      'checkroom': Icons.checkroom_outlined,
+      'devices': Icons.devices_outlined,
+      'shopping_bag': Icons.shopping_bag_outlined,
+      
+      // Entertainment Subcategories
+      'sports_esports': Icons.sports_esports_outlined,
+      'subscriptions': Icons.subscriptions_outlined,
+      
+      // Health & Medical Subcategories
+      'fitness_center': Icons.fitness_center_outlined,
+      'medical_services': Icons.medical_services_outlined,
+      'local_pharmacy': Icons.local_pharmacy_outlined,
+      
+      // Education Subcategories
+      'menu_book': Icons.menu_book_outlined,
+      'account_balance': Icons.account_balance_outlined,
+      
+      // Utilities Subcategories
+      'bolt': Icons.bolt_outlined,
+      'water_drop': Icons.water_drop_outlined,
+      'wifi': Icons.wifi_outlined,
+      
+      // Other Categories
+      'home': Icons.home_outlined,
+      'pets': Icons.pets_outlined,
+      'savings': Icons.savings_outlined,
+      'receipt': Icons.receipt_outlined,
+      'emoji_events': Icons.emoji_events_outlined,
+      'schedule': Icons.schedule_outlined,
     };
     
-    return iconMap[icon] ?? Icons.category;
+    return iconMap[icon] ?? Icons.category_outlined;
   }
 
   /// Get the color as Color object for UI display

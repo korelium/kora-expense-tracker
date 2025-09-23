@@ -453,27 +453,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   }
 
   IconData _getIconFromString(String iconString) {
-    const iconMap = {
-      'restaurant': Icons.restaurant,
-      'directions_car': Icons.directions_car,
-      'shopping_cart': Icons.shopping_cart,
-      'home': Icons.home,
-      'work': Icons.work,
-      'school': Icons.school,
-      'health_and_safety': Icons.health_and_safety,
-      'movie': Icons.movie,
-      'flight': Icons.flight,
-      'fitness_center': Icons.fitness_center,
-      'pets': Icons.pets,
-      'card_giftcard': Icons.card_giftcard,
-      'savings': Icons.savings,
-      'trending_up': Icons.trending_up,
-      'account_balance': Icons.account_balance,
-      'receipt': Icons.receipt,
-      'category': Icons.category,
-    };
+    // Create a temporary category to use its iconData getter
+    final tempCategory = app_category.Category(
+      id: 'temp',
+      name: 'temp',
+      icon: iconString,
+      type: app_category.CategoryType.expense,
+    );
     
-    return iconMap[iconString] ?? Icons.category;
+    return tempCategory.iconData;
   }
 
   Future<void> _saveCategory() async {
