@@ -142,6 +142,12 @@ class TransactionProviderHive with ChangeNotifier {
         await _db.deleteTransaction(transactionId);
         // Update account balance by reversing the transaction
         await _reverseAccountBalance(transaction);
+        
+        // If this is a credit card transaction, also delete the credit card transaction record
+        final account = _db.getAccount(transaction.accountId);
+        if (account != null && account.type == AccountType.creditCard) {
+          await _deleteCreditCardTransaction(transactionId);
+        }
       }
       notifyListeners();
     } catch (e) {
@@ -479,6 +485,25 @@ class TransactionProviderHive with ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print('Error creating credit card transaction: $e');
+      }
+    }
+  }
+
+  /// Delete a credit card transaction record
+  Future<void> _deleteCreditCardTransaction(String transactionId) async {
+    try {
+      // Find and delete the credit card transaction associated with this transaction
+      final creditCardTransactionsBox = await _db.creditCardTransactionsBox;
+      final creditCardTransactions = creditCardTransactionsBox.values
+          .where((ccTransaction) => ccTransaction.transactionId == transactionId)
+          .toList();
+      
+      for (final ccTransaction in creditCardTransactions) {
+        await creditCardTransactionsBox.delete(ccTransaction.id);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting credit card transaction: $e');
       }
     }
   }

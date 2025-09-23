@@ -619,7 +619,10 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
           
           // Financial Insight
           InsightCard(
-            insight: FinancialCalculator.getFinancialInsight(transactionProvider.transactions),
+            insight: FinancialCalculator.getFinancialInsight(
+              transactionProvider.transactions,
+              currencySymbol: currencyProvider.currencySymbol,
+            ),
             icon: Icons.lightbulb_outline,
             color: const Color(0xFF3B82F6),
           ),

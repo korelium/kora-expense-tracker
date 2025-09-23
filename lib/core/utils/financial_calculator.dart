@@ -72,7 +72,7 @@ class FinancialCalculator {
     return Map.fromEntries(sortedEntries.take(5));
   }
 
-  static String getFinancialInsight(List<Transaction> transactions) {
+  static String getFinancialInsight(List<Transaction> transactions, {String currencySymbol = '\$'}) {
     final savingsRate = calculateSavingsRate(transactions);
     final monthlyChange = calculateMonthlyChange(transactions);
     final topCategories = getTopCategories(transactions);
@@ -87,7 +87,7 @@ class FinancialCalculator {
       return "📈 Great! Your spending decreased by ${monthlyChange.abs().toStringAsFixed(1)}% this month.";
     } else if (topCategories.isNotEmpty) {
       final topCategory = topCategories.entries.first;
-      return "💡 Your biggest expense is ${topCategory.key} (${NumberFormat.currency(symbol: '\$').format(topCategory.value)}).";
+      return "💡 Your biggest expense is ${topCategory.key} (${NumberFormat.currency(symbol: currencySymbol).format(topCategory.value)}).";
     } else {
       return "📊 Keep tracking your expenses to get personalized insights!";
     }
