@@ -44,8 +44,10 @@ class NavigationController extends ChangeNotifier {
         case 1:
           return NavigationContext.accounts;
         case 2:
-          return NavigationContext.analytics;
+          return NavigationContext.creditCards;
         case 3:
+          return NavigationContext.analytics;
+        case 4:
           return NavigationContext.more;
         default:
           return NavigationContext.homeOverview;
@@ -148,6 +150,7 @@ enum NavigationContext {
   homeTransactions,
   homeAnalytics,
   accounts,
+  creditCards,
   analytics,
   more,
 }

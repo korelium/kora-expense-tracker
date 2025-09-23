@@ -8,7 +8,9 @@ import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/category.dart' as app_category;
+import '../models/credit_card_transaction.dart';
 import '../services/hive_database_helper.dart';
+import '../../core/error_handling/error_handler.dart';
 
 /// Enhanced Transaction Provider using Hive database
 /// Provides efficient CRUD operations and real-time data updates
@@ -62,6 +64,13 @@ class TransactionProviderHive with ChangeNotifier {
       await _db.addTransaction(transaction);
       await _updateAccountBalance(transaction);
       await _incrementCategoryUsage(transaction.categoryId);
+      
+      // If this is a credit card transaction, also create a credit card transaction record
+      final account = _db.getAccount(transaction.accountId);
+      if (account != null && account.type == AccountType.creditCard) {
+        await _createCreditCardTransaction(transaction);
+      }
+      
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
@@ -382,9 +391,12 @@ class TransactionProviderHive with ChangeNotifier {
       final account = _db.getAccount(transaction.accountId);
       if (account == null) return;
       
-      final newBalance = account.balance - transaction.amount;
-      if (newBalance < 0) {
-        throw Exception('Insufficient funds. Cannot have negative balance in ${account.type.name} account.');
+      // Allow negative balances for credit cards (they represent debt)
+      if (account.type != AccountType.creditCard) {
+        final newBalance = account.balance - transaction.amount;
+        if (newBalance < 0) {
+          throw Exception('Insufficient funds. Cannot have negative balance in ${account.type.name} account.');
+        }
       }
     }
   }
@@ -408,6 +420,67 @@ class TransactionProviderHive with ChangeNotifier {
     // Update account with new balance
     final updatedAccount = account.copyWith(balance: newBalance);
     await _db.updateAccount(updatedAccount);
+    
+    // If this is a credit card account, also update the credit card balance
+    if (account.type == AccountType.creditCard) {
+      try {
+        // Get credit card from database directly
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == account.id).toList();
+        
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: newBalance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+      } catch (e) {
+        // If credit card update fails, just log the error
+        if (kDebugMode) {
+          print('Error updating credit card balance: $e');
+        }
+      }
+    }
+  }
+
+  /// Create a credit card transaction record
+  Future<void> _createCreditCardTransaction(Transaction transaction) async {
+    try {
+      // Find the credit card associated with this account
+      final creditCardsBox = await _db.creditCardsBox;
+      final creditCards = creditCardsBox.values.where((card) => card.accountId == transaction.accountId).toList();
+      
+      if (creditCards.isNotEmpty) {
+        final creditCard = creditCards.first;
+        
+        // Create credit card transaction
+        final creditCardTransaction = CreditCardTransaction(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          creditCardId: creditCard.id,
+          transactionId: transaction.id,
+          categoryId: transaction.categoryId,
+          amount: transaction.amount,
+          description: transaction.description,
+          transactionDate: transaction.date,
+          postingDate: transaction.date,
+          type: transaction.type == TransactionType.income 
+              ? CreditCardTransactionType.payment 
+              : CreditCardTransactionType.purchase,
+          merchantName: null,
+          location: null,
+          isPending: false,
+          receiptImagePath: null,
+          notes: transaction.description,
+        );
+        
+        // Save to credit card transactions box
+        final creditCardTransactionsBox = await _db.creditCardTransactionsBox;
+        await creditCardTransactionsBox.put(creditCardTransaction.id, creditCardTransaction);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error creating credit card transaction: $e');
+      }
+    }
   }
 
   /// Increment category usage count

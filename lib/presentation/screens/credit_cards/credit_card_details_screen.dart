@@ -1,0 +1,910 @@
+// File location: lib/presentation/screens/credit_cards/credit_card_details_screen.dart
+// Purpose: Detailed view of a specific credit card
+// Author: Pown Kumar - Founder of Korelium
+// Date: December 19, 2024
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../data/providers/credit_card_provider.dart';
+import '../../../data/models/credit_card.dart';
+import '../../../core/theme/app_theme.dart';
+
+/// Detailed view of a specific credit card
+/// Shows transactions, payment history, and credit card details
+class CreditCardDetailsScreen extends StatefulWidget {
+  final CreditCard creditCard;
+
+  const CreditCardDetailsScreen({
+    super.key,
+    required this.creditCard,
+  });
+
+  @override
+  State<CreditCardDetailsScreen> createState() => _CreditCardDetailsScreenState();
+}
+
+class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CreditCardProvider>().initialize();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.lightBackground,
+      appBar: AppBar(
+        title: Text(
+          widget.creditCard.displayName,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppTheme.primaryBlue,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.white),
+            onPressed: () => _showEditDialog(context),
+            tooltip: 'Edit Credit Card',
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withOpacity(0.7),
+          labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+          tabs: const [
+            Tab(text: 'Overview'),
+            Tab(text: 'Transactions'),
+            Tab(text: 'Analytics'),
+          ],
+        ),
+      ),
+      body: Consumer<CreditCardProvider>(
+        builder: (context, creditCardProvider, child) {
+          if (creditCardProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryBlue,
+              ),
+            );
+          }
+
+          final transactions = creditCardProvider.getCreditCardTransactions(widget.creditCard.id);
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOverviewTab(transactions),
+              _buildTransactionsTab(transactions),
+              _buildAnalyticsTab(transactions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCreditCardHeader() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryBlue, AppTheme.primaryBlue.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.credit_card,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.creditCard.displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (widget.creditCard.isPaymentDueSoon || widget.creditCard.isOverdue)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: widget.creditCard.isOverdue ? Colors.red : Colors.orange,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    widget.creditCard.isOverdue ? 'Overdue' : 'Due Soon',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.creditCard.bankName,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildCompactBalanceCard(
+                  'Current Balance',
+                  widget.creditCard.formattedCurrentBalance('\$'),
+                  Colors.red[100]!,
+                  Colors.red[800]!,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildCompactBalanceCard(
+                  'Available Credit',
+                  widget.creditCard.formattedAvailableCredit('\$'),
+                  Colors.green[100]!,
+                  Colors.green[800]!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard(String title, String amount, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor.withOpacity(0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            amount,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactBalanceCard(String title, String amount, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor.withOpacity(0.8),
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            amount,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyInfo() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildKeyInfoItem('Limit', widget.creditCard.formattedCreditLimit('\$')),
+          ),
+          Container(
+            width: 1,
+            height: 20,
+            color: AppTheme.lightBorder,
+          ),
+          Expanded(
+            child: _buildKeyInfoItem('Rate', '${widget.creditCard.interestRate.toStringAsFixed(2)}%'),
+          ),
+          Container(
+            width: 1,
+            height: 20,
+            color: AppTheme.lightBorder,
+          ),
+          Expanded(
+            child: _buildKeyInfoItem('Due', '${widget.creditCard.dueDay}'),
+          ),
+          Container(
+            width: 1,
+            height: 20,
+            color: AppTheme.lightBorder,
+          ),
+          Expanded(
+            child: _buildKeyInfoItem('Utilization', widget.creditCard.formattedCreditUtilization),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyInfoItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: AppTheme.lightText.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppTheme.lightText,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.lightText,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.lightText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.payment,
+              label: 'Make Payment',
+              color: Colors.green,
+              onTap: () => _showPaymentDialog(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.add,
+              label: 'Add Transaction',
+              color: AppTheme.primaryBlue,
+              onTap: () => _showAddTransactionDialog(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionsList(List transactions) {
+    if (transactions.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.lightBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.receipt_long,
+              size: 32,
+              color: AppTheme.lightText.withOpacity(0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No Transactions Yet',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.lightText.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Add your first transaction to start tracking',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.lightText.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightText,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${transactions.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.lightText.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...transactions.take(5).map((transaction) => 
+            _buildTransactionItem(transaction)
+          ),
+          if (transactions.length > 5)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Center(
+                child: Text(
+                  'View All Transactions',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(transaction) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.lightBorder.withOpacity(0.3),
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: transaction.isPurchase 
+                  ? Colors.red.withOpacity(0.1)
+                  : Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              transaction.isPurchase ? Icons.shopping_cart : Icons.payment,
+              size: 14,
+              color: transaction.isPurchase ? Colors.red : Colors.green,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.displayName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.lightText,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatDate(transaction.transactionDate),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.lightText.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            transaction.formattedAmount,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: transaction.isPayment ? Colors.green : Colors.red,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Tab Methods
+  Widget _buildOverviewTab(List transactions) {
+    return RefreshIndicator(
+      onRefresh: () => context.read<CreditCardProvider>().refresh(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            _buildCreditCardHeader(),
+            _buildKeyInfo(),
+            _buildQuickActions(),
+            _buildRecentTransactionsPreview(transactions),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionsTab(List transactions) {
+    return RefreshIndicator(
+      onRefresh: () => context.read<CreditCardProvider>().refresh(),
+      child: _buildTransactionsList(transactions),
+    );
+  }
+
+  Widget _buildAnalyticsTab(List transactions) {
+    return RefreshIndicator(
+      onRefresh: () => context.read<CreditCardProvider>().refresh(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            _buildAnalyticsOverview(),
+            _buildSpendingByCategory(transactions),
+            _buildMonthlyTrends(transactions),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentTransactionsPreview(List transactions) {
+    if (transactions.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.lightBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.receipt_long,
+              size: 32,
+              color: AppTheme.lightText.withOpacity(0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No Recent Transactions',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.lightText.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightText,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => _tabController.animateTo(1),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...transactions.take(3).map((transaction) => 
+            _buildTransactionItem(transaction)
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsOverview() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Spending Overview',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.lightText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildAnalyticsCard(
+                  'This Month',
+                  '\$${widget.creditCard.currentBalance.abs().toStringAsFixed(2)}',
+                  Icons.trending_up,
+                  Colors.red,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildAnalyticsCard(
+                  'Avg Daily',
+                  '\$${(widget.creditCard.currentBalance.abs() / 30).toStringAsFixed(2)}',
+                  Icons.calendar_today,
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.lightText.withOpacity(0.7),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpendingByCategory(List transactions) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Spending by Category',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.lightText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (transactions.isEmpty)
+            const Center(
+              child: Text(
+                'No spending data available',
+                style: TextStyle(
+                  color: AppTheme.lightText,
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else
+            const Center(
+              child: Text(
+                'Category breakdown coming soon!',
+                style: TextStyle(
+                  color: AppTheme.lightText,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyTrends(List transactions) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Monthly Trends',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.lightText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (transactions.isEmpty)
+            const Center(
+              child: Text(
+                'No trend data available',
+                style: TextStyle(
+                  color: AppTheme.lightText,
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else
+            const Center(
+              child: Text(
+                'Trend charts coming soon!',
+                style: TextStyle(
+                  color: AppTheme.lightText,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      return '${difference} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  void _showEditDialog(BuildContext context) {
+    // TODO: Implement edit dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Edit functionality coming soon!'),
+      ),
+    );
+  }
+
+  void _showPaymentDialog() {
+    // TODO: Implement payment dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Payment functionality coming soon!'),
+      ),
+    );
+  }
+
+  void _showAddTransactionDialog() {
+    // TODO: Implement add transaction dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Add transaction functionality coming soon!'),
+      ),
+    );
+  }
+}

@@ -85,11 +85,11 @@ class Account extends HiveObject {
   }
 
   /// Check if this account is a liability (debt)
-  /// Since we only have Cash and Bank (both assets), this always returns false
-  bool get isLiability => false;
+  /// Credit cards are liabilities, bank and cash are assets
+  bool get isLiability => type == AccountType.creditCard;
 
   /// Check if this account is an asset (money owned)
-  /// Cash and Bank accounts are both considered assets
+  /// Bank and cash accounts are assets, credit cards are liabilities
   bool get isAsset => !isLiability;
 
   /// Get the effective balance for calculations
@@ -123,4 +123,8 @@ enum AccountType {
   /// Cash account - physical cash or petty cash (Asset)
   @HiveField(1)
   cash,
+  
+  /// Credit card account - debt account (Liability)
+  @HiveField(2)
+  creditCard,
 }

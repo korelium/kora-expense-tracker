@@ -235,6 +235,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         return 'Bank Account';
       case AccountType.cash:
         return 'Cash';
+      case AccountType.creditCard:
+        return 'Credit Card';
     }
   }
 

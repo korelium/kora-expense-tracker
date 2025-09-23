@@ -9,6 +9,8 @@ import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/category.dart' as app_category;
+import '../models/credit_card.dart';
+import '../models/credit_card_transaction.dart';
 
 /// Hive database helper class
 /// Manages all database operations for transactions, accounts, and categories
@@ -24,12 +26,16 @@ class HiveDatabaseHelper {
   static const String _accountsBox = 'accounts_box';
   static const String _categoriesBox = 'categories_box';
   static const String _settingsBox = 'settings_box';
+  static const String _creditCardsBox = 'credit_cards_box';
+  static const String _creditCardTransactionsBox = 'credit_card_transactions_box';
 
   // ===== BOX REFERENCES =====
   late Box<Transaction> _transactionsBoxRef;
   late Box<Account> _accountsBoxRef;
   late Box<app_category.Category> _categoriesBoxRef;
   late Box _settingsBoxRef;
+  late Box<CreditCard> _creditCardsBoxRef;
+  late Box<CreditCardTransaction> _creditCardTransactionsBoxRef;
 
   // ===== INITIALIZATION =====
   /// Initialize Hive database and open all boxes
@@ -76,6 +82,15 @@ class HiveDatabaseHelper {
     if (!Hive.isAdapterRegistered(5)) {
       Hive.registerAdapter(app_category.CategoryAdapter());
     }
+    if (!Hive.isAdapterRegistered(6)) {
+      Hive.registerAdapter(CreditCardAdapter());
+    }
+    if (!Hive.isAdapterRegistered(7)) {
+      Hive.registerAdapter(CreditCardTransactionAdapter());
+    }
+    if (!Hive.isAdapterRegistered(8)) {
+      Hive.registerAdapter(CreditCardTransactionTypeAdapter());
+    }
   }
 
   /// Open all required Hive boxes
@@ -84,6 +99,8 @@ class HiveDatabaseHelper {
     _accountsBoxRef = await Hive.openBox<Account>(_accountsBox);
     _categoriesBoxRef = await Hive.openBox<app_category.Category>(_categoriesBox);
     _settingsBoxRef = await Hive.openBox(_settingsBox);
+    _creditCardsBoxRef = await Hive.openBox<CreditCard>(_creditCardsBox);
+    _creditCardTransactionsBoxRef = await Hive.openBox<CreditCardTransaction>(_creditCardTransactionsBox);
     
     // Create default categories if none exist
     await _createDefaultCategories();
@@ -845,4 +862,24 @@ class HiveDatabaseHelper {
       print('✅ Created ${allSubcategories.length} default subcategories');
     }
   }
+
+  // ===== BOX GETTERS =====
+  
+  /// Get transactions box
+  Box<Transaction> get transactionsBox => _transactionsBoxRef;
+  
+  /// Get accounts box
+  Box<Account> get accountsBox => _accountsBoxRef;
+  
+  /// Get categories box
+  Box<app_category.Category> get categoriesBox => _categoriesBoxRef;
+  
+  /// Get settings box
+  Box get settingsBox => _settingsBoxRef;
+  
+  /// Get credit cards box
+  Box<CreditCard> get creditCardsBox => _creditCardsBoxRef;
+  
+  /// Get credit card transactions box
+  Box<CreditCardTransaction> get creditCardTransactionsBox => _creditCardTransactionsBoxRef;
 }

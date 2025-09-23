@@ -63,6 +63,8 @@ class AccountTypeAdapter extends TypeAdapter<AccountType> {
         return AccountType.bank;
       case 1:
         return AccountType.cash;
+      case 2:
+        return AccountType.creditCard;
       default:
         return AccountType.bank;
     }
@@ -76,6 +78,9 @@ class AccountTypeAdapter extends TypeAdapter<AccountType> {
         break;
       case AccountType.cash:
         writer.writeByte(1);
+        break;
+      case AccountType.creditCard:
+        writer.writeByte(2);
         break;
     }
   }

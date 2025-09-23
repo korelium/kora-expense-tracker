@@ -1,225 +1,226 @@
-# 💰 Kora Expense Tracker
+# 💳 Kora Expense Tracker
 
-<div align="center">
+A comprehensive Flutter expense tracking application with advanced credit card management, analytics, and smart navigation features.
 
-![Kora Logo](assets/images/korelium-logo.jpg)
+## 🚀 Features
 
-**A modern, feature-rich personal finance management app built with Flutter**
+### 💰 **Core Financial Management**
+- **Multi-Account Support** - Bank accounts, cash, and credit cards
+- **Transaction Tracking** - Income and expense management
+- **Category Management** - Customizable spending categories
+- **Currency Support** - Multiple currency options with real-time conversion
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.16.0+-blue.svg)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.2.0+-blue.svg)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Desktop-lightgrey.svg)](https://flutter.dev/)
+### 💳 **Advanced Credit Card Management**
+- **Credit Card Accounts** - Full credit card lifecycle management
+- **Balance Tracking** - Real-time balance and available credit monitoring
+- **Transaction History** - Detailed credit card transaction records
+- **Payment Reminders** - Due date tracking and payment notifications
+- **Credit Utilization** - Smart credit utilization monitoring
 
-</div>
+### 📊 **Analytics & Insights**
+- **Visual Charts** - Line, pie, and bar charts for spending analysis
+- **Trend Analysis** - Monthly and yearly spending patterns
+- **Category Breakdown** - Detailed spending by category
+- **Financial Insights** - Smart recommendations and alerts
 
-## 🌟 Overview
+### 🎯 **Smart Navigation**
+- **Intelligent Back Button** - Smart navigation with double-tap to exit
+- **Tabbed Interface** - Organized content with Overview, Transactions, and Analytics tabs
+- **Context-Aware Navigation** - Breadcrumb navigation system
 
-Kora Expense Tracker is a comprehensive personal finance management application that helps you take control of your money. Built with Flutter, it offers a modern, intuitive interface for tracking income, expenses, and financial health across all your devices.
-
-### ✨ Key Features
-
-- 💳 **Multi-Account Management** - Bank, Cash, and other account types
-- 📊 **Smart Analytics** - Visual charts and spending insights
-- 🏷️ **Unlimited Categories** - Create custom categories and subcategories
-- 📱 **Cross-Platform** - Works on Android, iOS, Web, and Desktop
-- 🔒 **Privacy First** - All data stored locally on your device
-- 🎨 **Modern UI** - Clean interface with dark/light theme support
-- 📸 **Receipt Management** - Attach photos to transactions
-- ⏰ **Precise Tracking** - Date and time for every transaction
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Flutter 3.16.0 or higher
-- Dart 3.2.0 or higher
-- Android Studio / VS Code (recommended)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/korelium/kora-expense-tracker.git
-cd kora-expense-tracker
-
-# Install dependencies
-flutter pub get
-
-# Generate code
-flutter packages pub run build_runner build
-
-# Run the app
-flutter run
-```
-
-### First Time Setup
-1. Complete the welcome screens
-2. Create your first account (Bank/Cash)
-3. Add your first transaction
-4. Explore the analytics and features
-
-## 📱 Screenshots
-
-<div align="center">
-
-| Home Dashboard | Add Transaction | Analytics |
-|:---:|:---:|:---:|
-| ![Home](docs/screenshots/home.png) | ![Add Transaction](docs/screenshots/add-transaction.png) | ![Analytics](docs/screenshots/analytics.png) |
-
-</div>
+### 🎨 **Modern UI/UX**
+- **Minimalist Design** - Clean, modern interface
+- **Responsive Layout** - Optimized for all screen sizes
+- **Dark/Light Theme** - Theme switching support
+- **Smooth Animations** - Polished user experience
 
 ## 🏗️ Architecture
 
-Kora Expense Tracker follows **Clean Architecture** principles with **MVVM pattern**:
-
-- **Presentation Layer**: UI components and screens
-- **Data Layer**: Models, providers, and services
-- **Core Layer**: Shared utilities and constants
-
-### Tech Stack
-- **Framework**: Flutter 3.x
-- **Language**: Dart
-- **State Management**: Provider pattern
-- **Database**: Hive (local NoSQL)
-- **Architecture**: Clean Architecture + MVVM
-
-## 📚 Documentation
-
-Comprehensive documentation is available in the [`docs/`](docs/) folder:
-
-- 📖 [App Overview](docs/app-overview.md) - What is Kora Expense Tracker?
-- 🚀 [Quick Start Guide](docs/quick-start.md) - Get up and running in 5 minutes
-- 📋 [Features Documentation](docs/features.md) - Complete feature list
-- 🛠️ [Installation Guide](docs/installation-guide.md) - Detailed setup instructions
-- 🏗️ [Architecture Guide](docs/architecture.md) - Technical architecture details
-- 🤝 [Contributing Guide](docs/contributing.md) - How to contribute to the project
-
-## 🎯 Features
-
-### 💰 Financial Tracking
-- Income and expense recording
-- Multiple account management
-- Category and subcategory organization
-- Receipt image attachment
-- Precise date and time tracking
-
-### 📊 Analytics & Insights
-- Spending pattern analysis
-- Category-wise breakdowns
-- Monthly and yearly reports
-- Financial health metrics
-- Savings rate calculations
-
-### 🎨 User Experience
-- Intuitive onboarding flow
-- Dark/Light theme support
-- Multiple currency support
-- Offline functionality
-- Cross-platform consistency
-
-### 🔒 Privacy & Security
-- Local data storage only
-- No cloud dependencies
-- Complete data control
-- Secure backup system
-
-## 🌍 Supported Platforms
-
-- ✅ **Android** - Full feature support
-- ✅ **iOS** - Full feature support
-- ✅ **Linux** - Desktop version
-- ✅ **Windows** - Desktop version
-- ✅ **macOS** - Desktop version
-- ✅ **Web** - Progressive Web App
-
-## 🛠️ Development
-
-### Setup Development Environment
-
-```bash
-# Install Flutter dependencies
-flutter pub get
-
-# Generate Hive adapters
-flutter packages pub run build_runner build
-
-# Run tests
-flutter test
-
-# Analyze code
-flutter analyze
-
-# Format code
-dart format .
+### **Clean Architecture Pattern**
+```
+lib/
+├── core/                    # Core functionality
+│   ├── error_handling/     # Error handling system
+│   ├── navigation/         # Navigation management
+│   └── theme/             # App theming
+├── data/                   # Data layer
+│   ├── models/            # Data models
+│   ├── providers/         # State management
+│   └── services/          # Database services
+└── presentation/          # UI layer
+    ├── screens/           # App screens
+    └── widgets/           # Reusable widgets
 ```
 
-### Building for Production
+### **State Management**
+- **Provider Pattern** - Reactive state management
+- **ChangeNotifier** - Efficient UI updates
+- **Hive Database** - Local data persistence
 
+### **Key Components**
+- **TransactionProviderHive** - Transaction management
+- **CreditCardProvider** - Credit card operations
+- **CurrencyProvider** - Currency handling
+- **NavigationController** - Smart navigation
+- **ErrorHandler** - Centralized error management
+
+## 🛠️ Technical Stack
+
+- **Framework:** Flutter 3.x
+- **Database:** Hive (NoSQL)
+- **State Management:** Provider
+- **Charts:** fl_chart
+- **Architecture:** Clean Architecture
+- **Platform:** Android/iOS
+
+## 📱 Screenshots
+
+### Home Dashboard
+- Financial overview with total balance
+- Quick stats and recent transactions
+- Smart navigation breadcrumbs
+
+### Credit Card Management
+- Tabbed interface (Overview, Transactions, Analytics)
+- Real-time balance updates
+- Transaction history with smart sorting
+
+### Analytics
+- Visual spending charts
+- Category breakdown
+- Trend analysis
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Flutter SDK 3.x or higher
+- Dart SDK 3.x or higher
+- Android Studio / VS Code
+- Git
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/kora-expense-tracker.git
+   cd kora-expense-tracker
+   ```
+
+2. **Install dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Generate Hive adapters**
+   ```bash
+   flutter packages pub run build_runner build
+   ```
+
+4. **Run the app**
+   ```bash
+   flutter run
+   ```
+
+## 🔧 Configuration
+
+### Database Setup
+The app uses Hive for local data storage. Database initialization is handled automatically on first launch.
+
+### Currency Configuration
+Default currency can be configured in the `CurrencyProvider`. The app supports multiple currencies with real-time conversion.
+
+## 📊 Key Features Implementation
+
+### Credit Card Management
+- **Account Creation** - Create credit card accounts with limit and due date
+- **Transaction Tracking** - Automatic transaction recording
+- **Balance Updates** - Real-time balance synchronization
+- **Payment Management** - Payment tracking and reminders
+
+### Smart Navigation
+- **Context-Aware Back Button** - Returns to appropriate screen
+- **Double-Tap Exit** - Quick app exit functionality
+- **Breadcrumb Navigation** - Clear navigation context
+
+### Error Handling
+- **Centralized Error Management** - Consistent error handling
+- **User-Friendly Messages** - Clear error communication
+- **Graceful Degradation** - App continues functioning despite errors
+
+## 🧪 Testing
+
+### Running Tests
 ```bash
-# Android APK
+# Unit tests
+flutter test
+
+# Integration tests
+flutter test integration_test/
+```
+
+### Test Coverage
+- Unit tests for providers and services
+- Widget tests for UI components
+- Integration tests for user flows
+
+## 📈 Performance Optimizations
+
+- **Efficient State Management** - Minimal rebuilds
+- **Lazy Loading** - On-demand data loading
+- **Image Optimization** - Compressed assets
+- **Memory Management** - Proper disposal of resources
+
+## 🔒 Security Features
+
+- **Local Data Storage** - No cloud dependency
+- **Data Encryption** - Hive encryption support
+- **Input Validation** - Comprehensive data validation
+- **Error Boundaries** - Graceful error handling
+
+## 🚀 Deployment
+
+### Android
+```bash
 flutter build apk --release
+```
 
-# iOS App
+### iOS
+```bash
 flutter build ios --release
-
-# Web App
-flutter build web --release
-
-# Desktop Apps
-flutter build linux --release
-flutter build windows --release
-flutter build macos --release
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](docs/contributing.md) for details.
-
-### Ways to Contribute
-- 🐛 **Bug Reports** - Report issues and bugs
-- ✨ **Feature Requests** - Suggest new features
-- 💻 **Code Contributions** - Submit pull requests
-- 📚 **Documentation** - Improve docs and guides
-- 🎨 **Design** - UI/UX improvements
-
-### Getting Started
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Team
+## 👨‍💻 Author
 
-**Korelium** - Building innovative financial technology solutions
-
-- **Website**: [korelium.com](https://korelium.com)
-- **Email**: support@korelium.com
-- **GitHub**: [@korelium](https://github.com/korelium)
+**Pown Kumar** - Founder of Korelium
+- GitHub: [@pownkumar](https://github.com/pownkumar)
+- LinkedIn: [Pown Kumar](https://linkedin.com/in/pownkumar)
 
 ## 🙏 Acknowledgments
 
 - Flutter team for the amazing framework
-- Hive team for the excellent local database
-- Provider team for state management
-- All contributors and users
+- Hive team for the excellent database solution
+- fl_chart team for the beautiful charting library
+- Provider team for the state management solution
 
-## 📊 Project Status
+## 📞 Support
 
-[![GitHub stars](https://img.shields.io/github/stars/korelium/kora-expense-tracker.svg?style=social&label=Star)](https://github.com/korelium/kora-expense-tracker)
-[![GitHub forks](https://img.shields.io/github/forks/korelium/kora-expense-tracker.svg?style=social&label=Fork)](https://github.com/korelium/kora-expense-tracker)
-[![GitHub watchers](https://img.shields.io/github/watchers/korelium/kora-expense-tracker.svg?style=social&label=Watch)](https://github.com/korelium/kora-expense-tracker)
+If you have any questions or need help, please:
+- Open an issue on GitHub
+- Contact: pown@korelium.com
+- Visit: [korelium.com](https://korelium.com)
 
 ---
 
-<div align="center">
-
-**Built with ❤️ by the Korelium Team**
-
-*Empowering Financial Freedom Through Technology*
-
-</div>
+**Made with ❤️ by Korelium Team**

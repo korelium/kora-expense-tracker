@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 // Data layer imports
 import '../../../data/providers/currency_provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
+import '../../../data/providers/credit_card_provider.dart';
 
 // Widget imports
 import '../../widgets/common/currency_selector.dart';
@@ -31,6 +32,7 @@ import '../analytics/analytics_screen.dart';
 import '../more/more_screen.dart';
 import '../transactions/expense_list_screen.dart';
 import '../transactions/add_expense_screen.dart';
+import '../credit_cards/credit_cards_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const HomeContent(),
     const AccountsScreen(),
+    const CreditCardsScreen(),
     const AnalyticsScreen(),
     const MoreScreen(),
   ];
@@ -67,6 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance),
             label: 'Accounts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.credit_card),
+            label: 'Credit Cards',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),
@@ -121,8 +128,8 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CurrencyProvider, TransactionProviderHive>(
-      builder: (context, currencyProvider, transactionProvider, child) {
+    return Consumer3<CurrencyProvider, TransactionProviderHive, CreditCardProvider>(
+      builder: (context, currencyProvider, transactionProvider, creditCardProvider, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
@@ -254,7 +261,11 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                                     ),
                                   ),
                                   Text(
-                                    currencyProvider.formatAmount(transactionProvider.totalBalance),
+                                    currencyProvider.formatAmount(
+                                      transactionProvider.accounts.fold(0.0, (sum, account) => 
+                                        account.isAsset ? sum + account.balance : sum - account.balance.abs()
+                                      )
+                                    ),
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Theme.of(context).colorScheme.onPrimary,
@@ -570,7 +581,11 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
                                        ),
                                      ),
                                      Text(
-                                       currencyProvider.formatAmount(transactionProvider.totalBalance),
+                                       currencyProvider.formatAmount(
+                                         transactionProvider.accounts.fold(0.0, (sum, account) => 
+                                           account.isAsset ? sum + account.balance : sum - account.balance.abs()
+                                         )
+                                       ),
                                        style: const TextStyle(
                                          color: Colors.white,
                                          fontSize: 12,

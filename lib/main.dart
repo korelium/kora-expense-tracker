@@ -16,6 +16,7 @@ import 'core/navigation/back_button_handler.dart';
 import 'data/providers/currency_provider.dart';
 import 'data/providers/transaction_provider_hive.dart';
 import 'data/providers/theme_provider.dart';
+import 'data/providers/credit_card_provider.dart';
 import 'data/services/hive_database_helper.dart';
 
 // Presentation layer imports
@@ -49,6 +50,9 @@ class KoraApp extends StatelessWidget {
         
         // Transaction, account, and category management (Hive-based)
         ChangeNotifierProvider(create: (_) => TransactionProviderHive()),
+        
+        // Credit card management
+        ChangeNotifierProvider(create: (_) => CreditCardProvider()),
         
         // Theme management (light/dark mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),

@@ -38,8 +38,9 @@ class BackButtonHandler {
       return _handleExitConfirmation(context);
     }
     
-    // If we're in other main screens (Accounts, Analytics, More), go to home overview
+    // If we're in other main screens (Accounts, Credit Cards, Analytics, More), go to home overview
     if (navigationController.currentContext == NavigationContext.accounts ||
+        navigationController.currentContext == NavigationContext.creditCards ||
         navigationController.currentContext == NavigationContext.analytics ||
         navigationController.currentContext == NavigationContext.more) {
       print('Navigating to home overview from main screen');
