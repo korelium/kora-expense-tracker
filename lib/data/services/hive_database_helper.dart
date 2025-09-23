@@ -11,6 +11,7 @@ import '../models/account.dart';
 import '../models/category.dart' as app_category;
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
+import '../models/bill.dart';
 
 /// Hive database helper class
 /// Manages all database operations for transactions, accounts, and categories
@@ -28,6 +29,7 @@ class HiveDatabaseHelper {
   static const String _settingsBox = 'settings_box';
   static const String _creditCardsBox = 'credit_cards_box';
   static const String _creditCardTransactionsBox = 'credit_card_transactions_box';
+  static const String _billsBox = 'bills_box';
 
   // ===== BOX REFERENCES =====
   late Box<Transaction> _transactionsBoxRef;
@@ -36,6 +38,7 @@ class HiveDatabaseHelper {
   late Box _settingsBoxRef;
   late Box<CreditCard> _creditCardsBoxRef;
   late Box<CreditCardTransaction> _creditCardTransactionsBoxRef;
+  late Box<Bill> _billsBoxRef;
 
   // ===== INITIALIZATION =====
   /// Initialize Hive database and open all boxes
@@ -91,6 +94,12 @@ class HiveDatabaseHelper {
     if (!Hive.isAdapterRegistered(8)) {
       Hive.registerAdapter(CreditCardTransactionTypeAdapter());
     }
+    if (!Hive.isAdapterRegistered(11)) {
+      Hive.registerAdapter(BillAdapter());
+    }
+    if (!Hive.isAdapterRegistered(12)) {
+      Hive.registerAdapter(BillStatusAdapter());
+    }
   }
 
   /// Open all required Hive boxes
@@ -101,6 +110,7 @@ class HiveDatabaseHelper {
     _settingsBoxRef = await Hive.openBox(_settingsBox);
     _creditCardsBoxRef = await Hive.openBox<CreditCard>(_creditCardsBox);
     _creditCardTransactionsBoxRef = await Hive.openBox<CreditCardTransaction>(_creditCardTransactionsBox);
+    _billsBoxRef = await Hive.openBox<Bill>(_billsBox);
     
     // Create default categories if none exist
     await _createDefaultCategories();
@@ -882,4 +892,7 @@ class HiveDatabaseHelper {
   
   /// Get credit card transactions box
   Box<CreditCardTransaction> get creditCardTransactionsBox => _creditCardTransactionsBoxRef;
+  
+  /// Get bills box
+  Box<Bill> get billsBox => _billsBoxRef;
 }

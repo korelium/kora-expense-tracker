@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/credit_card_provider.dart';
 import '../../../data/providers/currency_provider.dart';
+import '../../../data/providers/bill_provider.dart';
 import '../../../data/models/credit_card.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -358,24 +359,50 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   Widget _buildQuickActions() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: _buildActionButton(
-              icon: Icons.payment,
-              label: 'Make Payment',
-              color: Colors.green,
-              onTap: () => _showPaymentDialog(),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.payment,
+                  label: 'Make Payment',
+                  color: Colors.green,
+                  onTap: () => _showPaymentDialog(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.add,
+                  label: 'Add Transaction',
+                  color: AppTheme.primaryBlue,
+                  onTap: () => _showAddTransactionDialog(),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildActionButton(
-              icon: Icons.add,
-              label: 'Add Transaction',
-              color: AppTheme.primaryBlue,
-              onTap: () => _showAddTransactionDialog(),
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.receipt_long,
+                  label: 'Generate Bill',
+                  color: Colors.orange,
+                  onTap: () => _generateBill(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  icon: Icons.history,
+                  label: 'View Bills',
+                  color: Colors.purple,
+                  onTap: () => _viewBills(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -887,6 +914,58 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Edit functionality coming soon!'),
+      ),
+    );
+  }
+
+  /// Generate bill for this credit card
+  Future<void> _generateBill() async {
+    try {
+      final billProvider = context.read<BillProvider>();
+      final creditCardProvider = context.read<CreditCardProvider>();
+      
+      // Get transactions for this credit card
+      final transactions = creditCardProvider.getCreditCardTransactions(widget.creditCard.id);
+      
+      // Generate bill for last 30 days
+      final endDate = DateTime.now();
+      final startDate = endDate.subtract(const Duration(days: 30));
+      
+      final bill = await billProvider.generateBill(
+        creditCardId: widget.creditCard.id,
+        creditCard: widget.creditCard,
+        transactions: transactions,
+        statementPeriodStart: startDate,
+        statementPeriodEnd: endDate,
+        notes: 'Monthly statement for ${widget.creditCard.displayName}',
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bill generated successfully! Due: ${bill.formattedDueDate}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate bill: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// View bills for this credit card
+  void _viewBills() {
+    // TODO: Navigate to bills screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Bills screen coming soon!'),
       ),
     );
   }

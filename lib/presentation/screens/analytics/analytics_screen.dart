@@ -241,14 +241,7 @@ class AnalyticsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Text(
-                //   'Category Breakdown',
-                //   style: TextStyle(
-                //     fontSize: 16,
-                //     fontWeight: FontWeight.w600,
-                //     color: Theme.of(context).colorScheme.onSurface,
-                //   ),
-                // ),
+                // 
                 const SizedBox(height: 16),
                 Expanded(
                   child: categoryData.isEmpty
