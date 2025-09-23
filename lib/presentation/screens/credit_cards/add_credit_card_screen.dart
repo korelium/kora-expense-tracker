@@ -286,14 +286,23 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                 color: AppTheme.lightText,
                 fontSize: 16,
               ),
+              dropdownColor: Colors.white,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: AppTheme.lightText,
+              ),
               items: List.generate(31, (index) => index + 1)
                   .map((day) => DropdownMenuItem<int>(
                         value: day,
-                        child: Text(
-                          '$day',
-                          style: TextStyle(
-                            color: AppTheme.lightText,
-                            fontSize: 16,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            '$day',
+                            style: TextStyle(
+                              color: AppTheme.lightText,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ))

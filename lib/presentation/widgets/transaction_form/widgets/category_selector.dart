@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../data/models/category.dart' as app_category;
 import '../../../../data/models/transaction.dart';
 import '../../../../data/providers/transaction_provider_hive.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../screens/categories/add_category_screen.dart';
 
 /// Category Selector Widget
@@ -80,6 +81,11 @@ class CategorySelector extends StatelessWidget {
                   value: validCategoryId,
                   isExpanded: true,
                   menuMaxHeight: 300,
+                  dropdownColor: Colors.white,
+                  style: TextStyle(
+                    color: AppTheme.lightText,
+                    fontSize: 16,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Select Category',
                     border: OutlineInputBorder(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/models/account.dart';
 import '../../../../data/providers/currency_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 /// Account Selector Widget
 /// Provides account selection with balance display
@@ -45,6 +46,11 @@ class AccountSelector extends StatelessWidget {
               value: validAccountId,
               isExpanded: true,
               menuMaxHeight: 300,
+              dropdownColor: Colors.white,
+              style: TextStyle(
+                color: AppTheme.lightText,
+                fontSize: 16,
+              ),
               decoration: InputDecoration(
                 labelText: 'Select Account',
                 border: OutlineInputBorder(
