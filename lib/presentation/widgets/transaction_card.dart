@@ -26,6 +26,7 @@ class TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
+    final isTransfer = transaction.type == TransactionType.transfer;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -73,15 +74,34 @@ class TransactionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Title
-                      Text(
-                        transaction.description,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Consumer2<TransactionProviderHive, CurrencyProvider>(
+                        builder: (context, transactionProvider, currencyProvider, child) {
+                          String displayText = transaction.description;
+                          
+                          // For transfers, show "Transfer from X to Y"
+                          if (isTransfer && transaction.fromAccountId != null && transaction.toAccountId != null) {
+                            final fromAccount = transactionProvider.accounts.firstWhere(
+                              (account) => account.id == transaction.fromAccountId,
+                              orElse: () => throw Exception('From account not found'),
+                            );
+                            final toAccount = transactionProvider.accounts.firstWhere(
+                              (account) => account.id == transaction.toAccountId,
+                              orElse: () => throw Exception('To account not found'),
+                            );
+                            displayText = 'Transfer from ${fromAccount.name} to ${toAccount.name}';
+                          }
+                          
+                          return Text(
+                            displayText,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
                       ),
                       
                       const SizedBox(height: 2),
@@ -90,7 +110,7 @@ class TransactionCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            _getCategoryName(context),
+                            isTransfer ? 'Transfer' : _getCategoryName(context),
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
@@ -149,7 +169,11 @@ class TransactionCard extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                            color: isTransfer 
+                                ? const Color(0xFF3B82F6) // Blue for transfers
+                                : isIncome 
+                                    ? const Color(0xFF22C55E) // Green for income
+                                    : const Color(0xFFEF4444), // Red for expenses
                           ),
                         );
                       },

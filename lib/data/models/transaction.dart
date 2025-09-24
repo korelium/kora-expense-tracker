@@ -39,13 +39,21 @@ class Transaction extends HiveObject {
   @HiveField(6)
   final DateTime date;
   
-  /// Type of transaction (income or expense)
+  /// Type of transaction (income, expense, or transfer)
   @HiveField(7)
   final TransactionType type;
   
   /// Path to receipt image (optional)
   @HiveField(8)
   final String? receiptImagePath;
+  
+  /// Source account ID for transfers (optional)
+  @HiveField(9)
+  final String? fromAccountId;
+  
+  /// Destination account ID for transfers (optional)
+  @HiveField(10)
+  final String? toAccountId;
 
   /// Constructor for Transaction model
   Transaction({
@@ -58,6 +66,8 @@ class Transaction extends HiveObject {
     required this.date,
     required this.type,
     this.receiptImagePath,
+    this.fromAccountId,
+    this.toAccountId,
   });
 
   /// Convert Transaction to JSON for storage
@@ -104,6 +114,8 @@ class Transaction extends HiveObject {
     DateTime? date,
     TransactionType? type,
     String? receiptImagePath,
+    String? fromAccountId,
+    String? toAccountId,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -115,6 +127,8 @@ class Transaction extends HiveObject {
       date: date ?? this.date,
       type: type ?? this.type,
       receiptImagePath: receiptImagePath ?? this.receiptImagePath,
+      fromAccountId: fromAccountId ?? this.fromAccountId,
+      toAccountId: toAccountId ?? this.toAccountId,
     );
   }
 
@@ -144,4 +158,8 @@ enum TransactionType {
   /// Expense transaction - money going out
   @HiveField(1)
   expense,
+  
+  /// Transfer transaction - money moving between accounts
+  @HiveField(2)
+  transfer,
 }

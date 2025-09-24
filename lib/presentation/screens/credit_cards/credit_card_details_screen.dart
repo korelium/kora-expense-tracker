@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/credit_card_provider.dart';
 import '../../../data/providers/currency_provider.dart';
+import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/providers/bill_provider.dart';
 import '../../../data/models/credit_card.dart';
+import '../../../data/models/credit_card_transaction.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Detailed view of a specific credit card
@@ -34,6 +36,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CreditCardProvider>().initialize();
+      context.read<CreditCardProvider>().refresh();
     });
   }
 
@@ -79,8 +82,8 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           ],
         ),
       ),
-      body: Consumer2<CreditCardProvider, CurrencyProvider>(
-        builder: (context, creditCardProvider, currencyProvider, child) {
+      body: Consumer3<CreditCardProvider, CurrencyProvider, TransactionProviderHive>(
+        builder: (context, creditCardProvider, currencyProvider, transactionProvider, child) {
           if (creditCardProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(
@@ -89,15 +92,29 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             );
           }
 
-          final transactions = creditCardProvider.getCreditCardTransactions(widget.creditCard.id);
+          // Get fresh transactions from the database directly
+          return FutureBuilder<List<CreditCardTransaction>>(
+            future: creditCardProvider.getFreshCreditCardTransactions(widget.creditCard.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryBlue,
+                  ),
+                );
+              }
+              
+              final transactions = snapshot.data ?? [];
 
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildOverviewTab(transactions, currencyProvider),
-              _buildTransactionsTab(transactions),
-              _buildAnalyticsTab(transactions, currencyProvider),
-            ],
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildOverviewTab(transactions, currencyProvider),
+                  _buildTransactionsTab(transactions),
+                  _buildAnalyticsTab(transactions, currencyProvider),
+                ],
+              );
+            },
           );
         },
       ),
@@ -612,7 +629,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           children: [
             _buildCreditCardHeader(currencyProvider),
             _buildKeyInfo(currencyProvider),
-            _buildQuickActions(),
+            // _buildQuickActions(), // Hidden for now - using transfer functionality instead
             _buildRecentTransactionsPreview(transactions),
             const SizedBox(height: 16),
           ],

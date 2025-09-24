@@ -323,10 +323,29 @@ class CreditCardProvider extends ChangeNotifier {
 
   /// Get credit card transactions by credit card ID
   List<CreditCardTransaction> getCreditCardTransactions(String creditCardId) {
+    // Use cached data for immediate response, but refresh in background
     return _creditCardTransactions
         .where((transaction) => transaction.creditCardId == creditCardId)
         .toList()
         ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+  }
+
+  /// Get fresh credit card transactions by credit card ID from database
+  Future<List<CreditCardTransaction>> getFreshCreditCardTransactions(String creditCardId) async {
+    try {
+      final box = await _databaseHelper.creditCardTransactionsBox;
+      final allTransactions = box.values.toList();
+      return allTransactions
+          .where((transaction) => transaction.creditCardId == creditCardId)
+          .toList()
+          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    } catch (e) {
+      // Fallback to cached data if database access fails
+      return _creditCardTransactions
+          .where((transaction) => transaction.creditCardId == creditCardId)
+          .toList()
+          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    }
   }
 
   /// Get recent credit card transactions (last 30 days)

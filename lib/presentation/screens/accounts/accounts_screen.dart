@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import 'add_account_screen.dart';
 import '../credit_cards/add_credit_card_screen.dart';
 import '../credit_cards/credit_card_details_screen.dart';
+import '../../widgets/transfer_dialog.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -54,15 +55,14 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
             backgroundColor: Theme.of(context).colorScheme.surface,
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
-            // actions: [
-            //   // Fix negative balances button (only show if there are negative balances)
-            //   if (transactionProvider.accounts.any((account) => account.balance < 0))
-            //     IconButton(
-            //       icon: const Icon(Icons.warning_amber),
-            //       tooltip: 'Fix Negative Balances',
-            //       onPressed: () => _fixNegativeBalances(context, transactionProvider),
-            //     ),
-            // ],
+            actions: [
+              // Transfer button
+              IconButton(
+                icon: const Icon(Icons.swap_horiz),
+                tooltip: 'Transfer Money',
+                onPressed: () => _showTransferDialog(context, transactionProvider, currencyProvider),
+              ),
+            ],
           ),
           body: transactionProvider.accounts.isEmpty
               ? Center(
@@ -863,5 +863,12 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
         );
       }
     }
+  }
+
+  void _showTransferDialog(BuildContext context, TransactionProviderHive transactionProvider, CurrencyProvider currencyProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => const TransferDialog(),
+    );
   }
 }

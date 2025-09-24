@@ -86,21 +86,64 @@ class TransactionProviderHive with ChangeNotifier {
   Future<void> updateTransaction(Transaction transaction) async {
     _setLoading(true);
     try {
-      // Get the old transaction before updating
+      // Validate transaction exists
       final oldTransaction = _db.getTransaction(transaction.id);
+      if (oldTransaction == null) {
+        throw Exception('Transaction not found');
+      }
+      
+      // Validate account exists
+      final account = _db.getAccount(transaction.accountId);
+      if (account == null) {
+        throw Exception('Account not found');
+      }
+      
+      // Validate transaction amount
+      if (transaction.amount <= 0) {
+        throw Exception('Transaction amount must be greater than 0');
+      }
+      
+      // Check if the new transaction would create negative balance for asset accounts
+      if (account.isAsset) {
+        final currentBalance = account.balance;
+        final oldAmount = oldTransaction.amount;
+        final newAmount = transaction.amount;
+        final balanceChange = (oldTransaction.type == TransactionType.income ? oldAmount : -oldAmount) - 
+                             (transaction.type == TransactionType.income ? newAmount : -newAmount);
+        final newBalance = currentBalance + balanceChange;
+        
+        if (newBalance < 0) {
+          throw Exception('Insufficient balance. This would result in a negative balance of ${newBalance.abs().toStringAsFixed(2)}');
+        }
+      }
       
       // Update the transaction in database
       await _db.updateTransaction(transaction);
       
-      if (oldTransaction != null) {
-        // Reverse the old transaction's effect on account balance
-        await _reverseAccountBalance(oldTransaction);
-        // Apply the new transaction's effect on account balance
-        await _updateAccountBalance(transaction);
+      // Reverse the old transaction's effect on account balance
+      await _reverseAccountBalance(oldTransaction);
+      
+      // Apply the new transaction's effect on account balance
+      await _updateAccountBalance(transaction);
+      
+      // Handle credit card transaction updates
+      if (account.type == AccountType.creditCard) {
+        try {
+          // Delete the old credit card transaction
+          await _deleteCreditCardTransaction(oldTransaction.id);
+          // Create the new credit card transaction
+          await _createCreditCardTransaction(transaction);
+        } catch (e) {
+          // If credit card transaction update fails, log error but don't fail the entire operation
+          if (kDebugMode) {
+            print('Warning: Failed to update credit card transaction: $e');
+          }
+        }
       }
       
       notifyListeners();
     } catch (e) {
+      _setLoading(false);
       if (kDebugMode) {
         print('Error updating transaction: $e');
       }
@@ -448,6 +491,50 @@ class TransactionProviderHive with ChangeNotifier {
     }
   }
 
+  /// Update account balances for transfer transactions
+  Future<void> _updateTransferBalances(Account fromAccount, Account toAccount, double amount) async {
+    // Update source account balance (decrease)
+    final updatedFromAccount = fromAccount.copyWith(balance: fromAccount.balance - amount);
+    await _db.updateAccount(updatedFromAccount);
+    
+    // Update destination account balance (increase)
+    final updatedToAccount = toAccount.copyWith(balance: toAccount.balance + amount);
+    await _db.updateAccount(updatedToAccount);
+    
+    // Update credit card balances if applicable
+    if (fromAccount.type == AccountType.creditCard) {
+      try {
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == fromAccount.id).toList();
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: updatedFromAccount.balance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error updating source credit card balance: $e');
+        }
+      }
+    }
+    
+    if (toAccount.type == AccountType.creditCard) {
+      try {
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == toAccount.id).toList();
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: updatedToAccount.balance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error updating destination credit card balance: $e');
+        }
+      }
+    }
+  }
+
   /// Create a credit card transaction record
   Future<void> _createCreditCardTransaction(Transaction transaction) async {
     try {
@@ -519,6 +606,12 @@ class TransactionProviderHive with ChangeNotifier {
 
   /// Reverse account balance when transaction is deleted
   Future<void> _reverseAccountBalance(Transaction transaction) async {
+    // Handle transfer transactions differently
+    if (transaction.type == TransactionType.transfer) {
+      await _reverseTransferBalances(transaction);
+      return;
+    }
+
     final account = _db.getAccount(transaction.accountId);
     if (account == null) return;
 
@@ -555,6 +648,200 @@ class TransactionProviderHive with ChangeNotifier {
           print('Error updating credit card balance on deletion: $e');
         }
       }
+    }
+  }
+
+  /// Reverse transfer balances when a transfer transaction is deleted
+  Future<void> _reverseTransferBalances(Transaction transaction) async {
+    if (transaction.fromAccountId == null || transaction.toAccountId == null) {
+      if (kDebugMode) {
+        print('Error: Transfer transaction missing fromAccountId or toAccountId');
+      }
+      return;
+    }
+
+    // Get both accounts
+    final fromAccount = _db.getAccount(transaction.fromAccountId!);
+    final toAccount = _db.getAccount(transaction.toAccountId!);
+    
+    if (fromAccount == null || toAccount == null) {
+      if (kDebugMode) {
+        print('Error: Could not find source or destination account for transfer deletion');
+      }
+      return;
+    }
+
+    // Reverse the transfer: add amount back to source, subtract from destination
+    final updatedFromAccount = fromAccount.copyWith(balance: fromAccount.balance + transaction.amount);
+    final updatedToAccount = toAccount.copyWith(balance: toAccount.balance - transaction.amount);
+    
+    // Update both accounts
+    await _db.updateAccount(updatedFromAccount);
+    await _db.updateAccount(updatedToAccount);
+    
+    // Update credit card balances and delete credit card transaction records if applicable
+    if (fromAccount.type == AccountType.creditCard) {
+      try {
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == fromAccount.id).toList();
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: updatedFromAccount.balance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+        // Delete the credit card transaction record for the source account
+        await _deleteCreditCardTransaction(transaction.id);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error updating source credit card balance on transfer deletion: $e');
+        }
+      }
+    }
+    
+    if (toAccount.type == AccountType.creditCard) {
+      try {
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == toAccount.id).toList();
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final updatedCreditCard = creditCard.copyWith(currentBalance: updatedToAccount.balance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+        // Delete the credit card transaction record for the destination account
+        // Note: For transfers, we need to delete the credit card transaction that was created for the destination account
+        // This would have been created with a different transaction ID, so we need to find and delete it
+        await _deleteCreditCardTransactionByTransactionId(transaction.id, toAccount.id);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error updating destination credit card balance on transfer deletion: $e');
+        }
+      }
+    }
+  }
+
+  /// Delete credit card transaction by transaction ID and account ID
+  Future<void> _deleteCreditCardTransactionByTransactionId(String transactionId, String accountId) async {
+    try {
+      // First, find the credit card associated with the account
+      final creditCardsBox = await _db.creditCardsBox;
+      final creditCards = creditCardsBox.values.where((card) => card.accountId == accountId).toList();
+      
+      if (creditCards.isEmpty) {
+        if (kDebugMode) {
+          print('No credit card found for account: $accountId');
+        }
+        return;
+      }
+      
+      final creditCard = creditCards.first;
+      
+      // Now find and delete the credit card transaction
+      final creditCardTransactionsBox = await _db.creditCardTransactionsBox;
+      final creditCardTransactions = creditCardTransactionsBox.values
+          .where((ccTransaction) => 
+              ccTransaction.transactionId == transactionId && 
+              ccTransaction.creditCardId == creditCard.id)
+          .toList();
+      
+      for (final ccTransaction in creditCardTransactions) {
+        await creditCardTransactionsBox.delete(ccTransaction.id);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting credit card transaction by transaction ID: $e');
+      }
+    }
+  }
+
+  /// Add a transfer between two accounts
+  Future<void> addTransfer({
+    required String fromAccountId,
+    required String toAccountId,
+    required double amount,
+    required String description,
+  }) async {
+    _setLoading(true);
+    try {
+      // Validate input parameters
+      if (amount <= 0) {
+        throw Exception('Transfer amount must be greater than 0');
+      }
+      
+      if (fromAccountId == toAccountId) {
+        throw Exception('Cannot transfer to the same account');
+      }
+      
+      if (description.trim().isEmpty) {
+        throw Exception('Transfer description cannot be empty');
+      }
+      
+      // Validate accounts exist
+      final fromAccount = _db.getAccount(fromAccountId);
+      final toAccount = _db.getAccount(toAccountId);
+      
+      if (fromAccount == null) {
+        throw Exception('Source account not found');
+      }
+      if (toAccount == null) {
+        throw Exception('Destination account not found');
+      }
+      
+      // Validate sufficient balance for asset accounts
+      if (fromAccount.isAsset && fromAccount.balance < amount) {
+        throw Exception('Insufficient balance in source account. Available: ${fromAccount.balance.toStringAsFixed(2)}, Required: ${amount.toStringAsFixed(2)}');
+      }
+      
+      // Get the first available category for transfers (we'll use a generic one)
+      final categories = _db.getMainCategories(app_category.CategoryType.expense);
+      final transferCategoryId = categories.isNotEmpty ? categories.first.id : 'default';
+      
+      // Create single transfer transaction
+      final transferTransaction = Transaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        accountId: fromAccountId, // Primary account (source)
+        categoryId: transferCategoryId, // Use existing category
+        amount: amount,
+        type: TransactionType.transfer,
+        description: description,
+        date: DateTime.now(),
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
+      );
+      
+      // Add the transfer transaction
+      await _db.addTransaction(transferTransaction);
+      
+      // Update both account balances manually
+      await _updateTransferBalances(fromAccount, toAccount, amount);
+      
+      // If either account is a credit card, create credit card transaction records
+      try {
+        if (fromAccount.type == AccountType.creditCard) {
+          await _createCreditCardTransaction(transferTransaction);
+        }
+        if (toAccount.type == AccountType.creditCard) {
+          // Create a separate credit card transaction for the destination account
+          final creditCardTransaction = transferTransaction.copyWith(
+            accountId: toAccountId,
+            type: TransactionType.income, // Credit card sees it as income
+          );
+          await _createCreditCardTransaction(creditCardTransaction);
+        }
+      } catch (e) {
+        // If credit card transaction creation fails, log error but don't fail the entire operation
+        if (kDebugMode) {
+          print('Warning: Failed to create credit card transaction records: $e');
+        }
+      }
+      
+      _setLoading(false);
+      notifyListeners();
+    } catch (e) {
+      _setLoading(false);
+      if (kDebugMode) {
+        print('Error adding transfer: $e');
+      }
+      rethrow;
     }
   }
 }

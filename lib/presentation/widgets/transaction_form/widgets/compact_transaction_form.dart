@@ -407,15 +407,16 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
                       : account.type.toString() == 'AccountType.creditCard'
                           ? Icons.credit_card
                           : Icons.money,
-                  size: 20,
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
-                Flexible(
+                const SizedBox(width: 6),
+                Expanded(
                   child: Text(
                     '${account.name} - ${context.read<CurrencyProvider>().currencySymbol}${account.balance.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       color: account.balance >= 0 ? Colors.black87 : Colors.red,
+                      fontSize: 13,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
