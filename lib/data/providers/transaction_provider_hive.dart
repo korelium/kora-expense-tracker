@@ -260,6 +260,10 @@ class TransactionProviderHive with ChangeNotifier {
   Future<void> deleteAccount(String accountId) async {
     _setLoading(true);
     try {
+      // First, delete all transfer transactions that reference this account
+      await _deleteTransferTransactionsForAccount(accountId);
+      
+      // Then delete the account
       await _db.deleteAccount(accountId);
       notifyListeners();
     } catch (e) {
@@ -269,6 +273,30 @@ class TransactionProviderHive with ChangeNotifier {
       rethrow;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Delete all transfer transactions that reference a specific account
+  Future<void> _deleteTransferTransactionsForAccount(String accountId) async {
+    try {
+      final transactionsBox = await _db.transactionsBox;
+      final transferTransactions = transactionsBox.values
+          .where((transaction) => 
+              transaction.type == TransactionType.transfer &&
+              (transaction.fromAccountId == accountId || transaction.toAccountId == accountId))
+          .toList();
+      
+      for (final transaction in transferTransactions) {
+        await transactionsBox.delete(transaction.id);
+      }
+      
+      if (kDebugMode && transferTransactions.isNotEmpty) {
+        print('Deleted ${transferTransactions.length} transfer transactions for account: $accountId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting transfer transactions for account: $e');
+      }
     }
   }
 

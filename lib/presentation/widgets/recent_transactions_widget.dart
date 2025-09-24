@@ -184,15 +184,20 @@ class RecentTransactionsWidget extends StatelessWidget {
                           
                           // For transfers, show "Transfer from X to Y"
                           if (isTransfer && transaction.fromAccountId != null && transaction.toAccountId != null) {
-                            final fromAccount = transactionProvider.accounts.firstWhere(
-                              (account) => account.id == transaction.fromAccountId,
-                              orElse: () => throw Exception('From account not found'),
-                            );
-                            final toAccount = transactionProvider.accounts.firstWhere(
-                              (account) => account.id == transaction.toAccountId,
-                              orElse: () => throw Exception('To account not found'),
-                            );
-                            displayText = 'Transfer from ${fromAccount.name} to ${toAccount.name}';
+                            try {
+                              final fromAccount = transactionProvider.accounts.firstWhere(
+                                (account) => account.id == transaction.fromAccountId,
+                                orElse: () => throw Exception('From account not found'),
+                              );
+                              final toAccount = transactionProvider.accounts.firstWhere(
+                                (account) => account.id == transaction.toAccountId,
+                                orElse: () => throw Exception('To account not found'),
+                              );
+                              displayText = 'Transfer from ${fromAccount.name} to ${toAccount.name}';
+                            } catch (e) {
+                              // If accounts are not found (deleted), show generic transfer text
+                              displayText = 'Transfer (Account deleted)';
+                            }
                           }
                           
                           return Text(
