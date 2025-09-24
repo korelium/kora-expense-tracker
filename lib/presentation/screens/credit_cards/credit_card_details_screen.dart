@@ -927,7 +927,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   }
 
   void _showEditDialog(BuildContext context) {
-    // TODO: Implement edit dialog
+    // TODO: Implement edit dialog - Planned for Phase 4 (Deep Refactoring)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Edit functionality coming soon!'),
@@ -979,7 +979,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
 
   /// View bills for this credit card
   void _viewBills() {
-    // TODO: Navigate to bills screen
+    // TODO: Navigate to bills screen - Planned for Phase 5 (Credit Card Bill Cycles)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Bills screen coming soon!'),
@@ -988,7 +988,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   }
 
   void _showPaymentDialog() {
-    // TODO: Implement payment dialog
+    // TODO: Implement payment dialog - Planned for Phase 5 (Credit Card Bill Cycles)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Payment functionality coming soon!'),
@@ -997,7 +997,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   }
 
   void _showAddTransactionDialog() {
-    // TODO: Implement add transaction dialog
+    // TODO: Implement add transaction dialog - Planned for Phase 4 (Deep Refactoring)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Add transaction functionality coming soon!'),

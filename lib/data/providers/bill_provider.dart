@@ -5,13 +5,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
 import '../models/bill.dart';
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/bill_generation_service.dart';
 import '../services/hive_database_helper.dart';
-import '../../core/error_handling/error_handler.dart';
 
 /// Provider for managing credit card bills and statements
 class BillProvider extends ChangeNotifier {

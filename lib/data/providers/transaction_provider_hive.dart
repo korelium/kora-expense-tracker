@@ -10,7 +10,6 @@ import '../models/account.dart';
 import '../models/category.dart' as app_category;
 import '../models/credit_card_transaction.dart';
 import '../services/hive_database_helper.dart';
-import '../../core/error_handling/error_handler.dart';
 
 /// Enhanced Transaction Provider using Hive database
 /// Provides efficient CRUD operations and real-time data updates

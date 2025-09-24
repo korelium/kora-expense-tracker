@@ -4,13 +4,11 @@
 // Date: September 23, 2025
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
 import '../services/hive_database_helper.dart';
-import '../../core/error_handling/error_handler.dart';
 
 /// Provider for managing credit card state and operations
 /// Handles CRUD operations for credit cards and their transactions

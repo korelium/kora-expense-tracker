@@ -86,7 +86,7 @@ class KoraApp extends StatelessWidget {
             ), // App starts with proper initialization
             
             // ===== LOCALIZATION =====
-            // TODO: Add localization support for multiple languages
+            // TODO: Add localization support for multiple languages - Planned for Phase 4 (Deep Refactoring)
             // locale: const Locale('en', 'US'),
             // supportedLocales: const [Locale('en', 'US')],
           );
