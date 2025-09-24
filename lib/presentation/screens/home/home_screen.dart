@@ -33,6 +33,7 @@ import '../more/more_screen.dart';
 import '../transactions/expense_list_screen.dart';
 import '../transactions/add_expense_screen.dart';
 import '../credit_cards/credit_cards_screen.dart';
+import '../loans/loans_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeContent(),
     const AccountsScreen(),
     const CreditCardsScreen(),
+    const LoansScreen(),
     const AnalyticsScreen(),
     const MoreScreen(),
   ];
@@ -74,6 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.credit_card),
             label: 'Credit Cards',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: 'Loans',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),

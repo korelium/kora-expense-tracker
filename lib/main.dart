@@ -18,6 +18,7 @@ import 'data/providers/transaction_provider_hive.dart';
 import 'data/providers/theme_provider.dart';
 import 'data/providers/credit_card_provider.dart';
 import 'data/providers/bill_provider.dart';
+import 'data/providers/loan_provider.dart';
 import 'data/services/hive_database_helper.dart';
 
 // Presentation layer imports
@@ -57,6 +58,9 @@ class KoraApp extends StatelessWidget {
         
         // Bill management
         ChangeNotifierProvider(create: (_) => BillProvider()),
+        
+        // Loan management
+        ChangeNotifierProvider(create: (_) => LoanProvider()),
         
         // Theme management (light/dark mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
