@@ -1,0 +1,32 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#4F46E5" stroke="#3730A3" stroke-width="8"/>
+  
+  <!-- Inner Circle -->
+  <circle cx="256" cy="256" r="180" fill="#6366F1" opacity="0.3"/>
+  
+  <!-- Main Icon - Stylized "K" -->
+  <g transform="translate(256, 256)">
+    <!-- Vertical line of K -->
+    <rect x="-8" y="-120" width="16" height="240" fill="white" rx="8"/>
+    
+    <!-- Top diagonal of K -->
+    <rect x="-8" y="-120" width="120" height="16" fill="white" rx="8" transform="rotate(45 0 0)"/>
+    
+    <!-- Bottom diagonal of K -->
+    <rect x="-8" y="104" width="120" height="16" fill="white" rx="8" transform="rotate(-45 0 0)"/>
+    
+    <!-- Dollar sign accent -->
+    <circle cx="80" cy="-40" r="20" fill="#F59E0B" stroke="white" stroke-width="3"/>
+    <text x="80" y="-35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">$</text>
+  </g>
+  
+  <!-- Subtle gradient overlay -->
+  <defs>
+    <radialGradient id="gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:white;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:white;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="url(#gradient)"/>
+</svg>

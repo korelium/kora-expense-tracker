@@ -48,15 +48,46 @@ class CreditCardProvider extends ChangeNotifier {
     final totalUtilization = activeCreditCards.fold(0.0, (sum, card) => sum + card.creditUtilization.abs());
     return totalUtilization / activeCreditCards.length;
   }
+  
+  /// Get overall credit utilization percentage
+  double get overallCreditUtilization {
+    if (totalCreditLimit == 0) return 0.0;
+    return (totalCurrentBalance / totalCreditLimit) * 100;
+  }
+  
+  /// Check if overall credit utilization exceeds 30% threshold
+  bool get isOverallUtilizationHigh => overallCreditUtilization > 30.0;
+  
+  /// Get credit cards that exceed 30% utilization threshold
+  List<CreditCard> get highUtilizationCards => activeCreditCards.where((card) => 
+    card.creditUtilization.abs() > 30.0).toList();
+  
+  /// Get number of cards exceeding 30% threshold
+  int get highUtilizationCardsCount => highUtilizationCards.length;
+  
+  /// Get available credit for a specific card
+  double getAvailableCreditForCard(String cardId) {
+    final card = _creditCards.firstWhere((c) => c.id == cardId, orElse: () => throw Exception('Card not found'));
+    return card.creditLimit - card.currentBalance;
+  }
+  
+  /// Check if a specific card exceeds 30% utilization
+  bool isCardUtilizationHigh(String cardId) {
+    final card = _creditCards.firstWhere((c) => c.id == cardId, orElse: () => throw Exception('Card not found'));
+    return card.creditUtilization.abs() > 30.0;
+  }
 
   /// Initialize the provider and load data
   Future<void> initialize() async {
+    print('CreditCardProvider: Initializing...');
     _setLoading(true);
     try {
       await _loadCreditCards();
       await _loadCreditCardTransactions();
       _clearError();
+      print('CreditCardProvider: Initialization completed successfully');
     } catch (e) {
+      print('CreditCardProvider: Initialization failed: $e');
       _setError('Failed to initialize credit card data: $e');
     } finally {
       _setLoading(false);
@@ -68,8 +99,10 @@ class CreditCardProvider extends ChangeNotifier {
     try {
       final box = await _databaseHelper.creditCardsBox;
       _creditCards = box.values.toList();
+      print('CreditCardProvider: Loaded ${_creditCards.length} credit cards');
       notifyListeners();
     } catch (e) {
+      print('CreditCardProvider: Error loading credit cards: $e');
       throw Exception('Failed to load credit cards: $e');
     }
   }

@@ -18,8 +18,8 @@ import 'data/providers/transaction_provider_hive.dart';
 import 'data/providers/theme_provider.dart';
 import 'data/providers/credit_card_provider.dart';
 import 'data/providers/bill_provider.dart';
-import 'data/providers/loan_provider.dart';
 import 'data/services/hive_database_helper.dart';
+import 'features/loans/data/providers/debt_provider.dart';
 
 // Presentation layer imports
 import 'presentation/screens/intro_screen.dart';
@@ -59,8 +59,8 @@ class KoraApp extends StatelessWidget {
         // Bill management
         ChangeNotifierProvider(create: (_) => BillProvider()),
         
-        // Loan management
-        ChangeNotifierProvider(create: (_) => LoanProvider()),
+        // Debt management
+        ChangeNotifierProvider(create: (_) => DebtProvider()),
         
         // Theme management (light/dark mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -123,6 +123,13 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final bool hasSeenIntro = prefs.getBool('has_seen_intro') ?? false;
+      
+      // Initialize providers
+      final debtProvider = context.read<DebtProvider>();
+      await debtProvider.initialize();
+      
+      final creditCardProvider = context.read<CreditCardProvider>();
+      await creditCardProvider.initialize();
       
       setState(() {
         _showIntro = !hasSeenIntro;

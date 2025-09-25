@@ -7,6 +7,7 @@ import '../../../../data/providers/transaction_provider_hive.dart';
 import '../../../../data/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../controllers/transaction_form_controller.dart';
+import 'multiple_receipt_image_picker.dart';
 
 /// Compact Transaction Form
 /// A more efficient and user-friendly layout for adding transactions
@@ -233,13 +234,32 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         TextFormField(
           controller: _controller.descriptionController,
           style: TextStyle(
-            color: AppTheme.lightText,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
           ),
           decoration: InputDecoration(
             hintText: 'Enter transaction title',
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             prefixIcon: const Icon(Icons.title),
           ),
@@ -256,7 +276,7 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         TextFormField(
           controller: _controller.amountController,
           style: TextStyle(
-            color: AppTheme.lightText,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -268,6 +288,22 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             prefixIcon: const Icon(Icons.currency_rupee, size: 28),
             suffixText: 'INR',
@@ -663,15 +699,35 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           ),
           const SizedBox(height: 12),
           TextFormField(
+            controller: _controller.notesController,
             maxLines: 4,
             style: TextStyle(
-              color: AppTheme.lightText,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 14,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Add any additional notes about this transaction...',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
               ),
               contentPadding: EdgeInsets.all(12),
             ),
@@ -694,65 +750,11 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
 
 
   Widget _buildReceiptField() {
-    return _buildInfoCard(
-      title: 'Receipt',
-      icon: Icons.receipt,
-      child: Row(
-        children: [
-          if (_controller.receiptImagePath != null) ...[
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: FileImage(File(_controller.receiptImagePath!)),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Receipt attached',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.green,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: _controller.removeImage,
-              icon: const Icon(Icons.close, size: 16),
-            ),
-          ] else ...[
-            Expanded(
-              child: GestureDetector(
-                onTap: _controller.pickImage,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                      style: BorderStyle.solid,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_a_photo, size: 16),
-                      const SizedBox(width: 4),
-                      Text('Add Receipt', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+    return MultipleReceiptImagePicker(
+      receiptImagePaths: _controller.receiptImagePaths,
+      onPickImages: _controller.pickMultipleImages,
+      onRemoveImage: _controller.removeImageAt,
+      onClearAll: _controller.clearAllImages,
     );
   }
 

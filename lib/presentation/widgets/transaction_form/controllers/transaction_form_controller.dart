@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import '../../../../data/models/transaction.dart';
+import '../../../../core/services/image_storage_service.dart';
 
 /// Transaction Form Controller
 /// Manages the state and logic for the transaction form
@@ -12,6 +11,7 @@ import '../../../../data/models/transaction.dart';
 class TransactionFormController extends ChangeNotifier {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
+  final TextEditingController notesController = TextEditingController();
   
   String? _selectedAccountId;
   String? _selectedCategoryId;
@@ -21,6 +21,7 @@ class TransactionFormController extends ChangeNotifier {
   TransactionType _selectedType = TransactionType.expense;
   bool _isLoading = false;
   String? _receiptImagePath;
+  List<String> _receiptImagePaths = [];
   
   // Quick amount buttons
   final List<double> quickAmounts = [100, 500, 1000, 2000, 5000];
@@ -34,11 +35,13 @@ class TransactionFormController extends ChangeNotifier {
   TransactionType get selectedType => _selectedType;
   bool get isLoading => _isLoading;
   String? get receiptImagePath => _receiptImagePath;
+  List<String> get receiptImagePaths => _receiptImagePaths;
 
   /// Initialize form with transaction data (for editing)
   void initializeWithTransaction(Transaction transaction) {
     descriptionController.text = transaction.description;
     amountController.text = transaction.amount.toString();
+    notesController.text = transaction.notes ?? '';
     _selectedAccountId = transaction.accountId;
     _selectedCategoryId = transaction.categoryId;
     _selectedSubcategoryId = transaction.subcategoryId;
@@ -46,6 +49,7 @@ class TransactionFormController extends ChangeNotifier {
     _selectedTime = TimeOfDay.fromDateTime(transaction.date);
     _selectedType = transaction.type;
     _receiptImagePath = transaction.receiptImagePath;
+    _receiptImagePaths = List.from(transaction.receiptImagePaths);
     notifyListeners();
   }
 
@@ -120,15 +124,12 @@ class TransactionFormController extends ChangeNotifier {
       );
 
       if (image != null) {
-        // Get application documents directory
-        final Directory appDocDir = await getApplicationDocumentsDirectory();
-        final String fileName = 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final String filePath = '${appDocDir.path}/$fileName';
-        
-        // Save image to local storage
-        await image.saveTo(filePath);
-        _receiptImagePath = filePath;
-        notifyListeners();
+        // Use the image storage service to save the image
+        final String? savedPath = await ImageStorageService.saveReceiptImage(image);
+        if (savedPath != null) {
+          _receiptImagePath = savedPath;
+          notifyListeners();
+        }
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -136,8 +137,51 @@ class TransactionFormController extends ChangeNotifier {
   }
 
   /// Remove selected image
-  void removeImage() {
-    _receiptImagePath = null;
+  Future<void> removeImage() async {
+    if (_receiptImagePath != null) {
+      // Delete the actual file
+      await ImageStorageService.deleteImage(_receiptImagePath!);
+      _receiptImagePath = null;
+      notifyListeners();
+    }
+  }
+
+  /// Pick multiple images from gallery
+  Future<void> pickMultipleImages() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final List<XFile> images = await picker.pickMultiImage(
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+
+      if (images.isNotEmpty) {
+        // Use the image storage service to save multiple images
+        final List<String> savedPaths = await ImageStorageService.saveMultipleReceiptImages(images);
+        _receiptImagePaths.addAll(savedPaths);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error picking multiple images: $e');
+    }
+  }
+
+  /// Remove image at specific index
+  Future<void> removeImageAt(int index) async {
+    if (index >= 0 && index < _receiptImagePaths.length) {
+      // Delete the actual file
+      await ImageStorageService.deleteImage(_receiptImagePaths[index]);
+      _receiptImagePaths.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  /// Clear all images
+  Future<void> clearAllImages() async {
+    // Delete all actual files
+    await ImageStorageService.deleteMultipleImages(_receiptImagePaths);
+    _receiptImagePaths.clear();
     notifyListeners();
   }
 
@@ -187,6 +231,8 @@ class TransactionFormController extends ChangeNotifier {
       date: combinedDateTime,
       type: _selectedType,
       receiptImagePath: _receiptImagePath,
+      receiptImagePaths: _receiptImagePaths,
+      notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
     );
   }
 
@@ -209,6 +255,8 @@ class TransactionFormController extends ChangeNotifier {
       date: combinedDateTime,
       type: _selectedType,
       receiptImagePath: _receiptImagePath,
+      receiptImagePaths: _receiptImagePaths,
+      notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
     );
   }
 
@@ -216,6 +264,7 @@ class TransactionFormController extends ChangeNotifier {
   void dispose() {
     descriptionController.dispose();
     amountController.dispose();
+    notesController.dispose();
     super.dispose();
   }
 }

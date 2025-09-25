@@ -187,19 +187,35 @@ class TransactionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     
                     // Image Icon (if receipt exists)
-                    if (transaction.receiptImagePath != null)
+                    if (transaction.receiptImagePath != null || transaction.receiptImagePaths.isNotEmpty)
                       GestureDetector(
                         onTap: () => _showImagePreview(context),
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
-                            Icons.image,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.primary,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.image,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              if (transaction.receiptImagePaths.length > 1) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${transaction.receiptImagePaths.length}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ),
@@ -213,79 +229,27 @@ class TransactionCard extends StatelessWidget {
     );
   }
 
-  /// Show image preview dialog
+  /// Show image preview - always use gallery view for consistency
   void _showImagePreview(BuildContext context) {
-    if (transaction.receiptImagePath == null) return;
+    final List<String> imagePaths = [];
     
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Receipt Image',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              // Image
-              Flexible(
-                child: Container(
-                  constraints: const BoxConstraints(maxHeight: 400),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(transaction.receiptImagePath!),
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.error, size: 48, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text('Image not found'),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Close button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
+    // Add single image path if exists
+    if (transaction.receiptImagePath != null) {
+      imagePaths.add(transaction.receiptImagePath!);
+    }
+    
+    // Add multiple image paths
+    imagePaths.addAll(transaction.receiptImagePaths);
+    
+    if (imagePaths.isEmpty) return;
+    
+    // Always use gallery view for consistent experience
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageGalleryScreen(
+          imagePaths: imagePaths,
+          title: 'Receipt Images',
         ),
       ),
     );
@@ -345,5 +309,208 @@ class TransactionCard extends StatelessWidget {
     } else {
       return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     }
+  }
+}
+
+/// Image Gallery Screen for viewing multiple images
+class ImageGalleryScreen extends StatefulWidget {
+  final List<String> imagePaths;
+  final String title;
+
+  const ImageGalleryScreen({
+    Key? key,
+    required this.imagePaths,
+    required this.title,
+  }) : super(key: key);
+
+  @override
+  State<ImageGalleryScreen> createState() => _ImageGalleryScreenState();
+}
+
+class _ImageGalleryScreenState extends State<ImageGalleryScreen> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          '${widget.title} (${_currentIndex + 1}/${widget.imagePaths.length})',
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          // Zoom controls
+          IconButton(
+            onPressed: () => _showZoomInstructions(context),
+            icon: const Icon(Icons.zoom_in, color: Colors.white),
+            tooltip: 'Zoom Instructions',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Image viewer with enhanced zoom
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.imagePaths.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                return Center(
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 5.0,
+                    panEnabled: true,
+                    boundaryMargin: const EdgeInsets.all(20),
+                    constrained: false,
+                    child: Image.file(
+                      File(widget.imagePaths[index]),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                color: Colors.white,
+                                size: 64,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Failed to load image',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // Thumbnail strip (show for single image too for consistency)
+          Container(
+            height: 80,
+            padding: const EdgeInsets.all(8),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.imagePaths.length,
+              itemBuilder: (context, index) {
+                final isSelected = index == _currentIndex;
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? Colors.white : Colors.grey,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.file(
+                        File(widget.imagePaths[index]),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade800,
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showZoomInstructions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Zoom Instructions',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '• Pinch to zoom in/out',
+              style: TextStyle(color: Colors.white70),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '• Drag to pan around',
+              style: TextStyle(color: Colors.white70),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '• Double tap to reset zoom',
+              style: TextStyle(color: Colors.white70),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '• Swipe left/right to navigate',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Got it',
+              style: TextStyle(color: Colors.blue),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

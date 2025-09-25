@@ -50,6 +50,11 @@ class TransactionProviderHive with ChangeNotifier {
     return savings > 0 ? (savings / totalIncome) * 100 : 0.0;
   }
 
+  /// Refresh data and notify listeners
+  void refresh() {
+    notifyListeners();
+  }
+
   // ===== TRANSACTION METHODS =====
   
   /// Add a new transaction
@@ -102,8 +107,8 @@ class TransactionProviderHive with ChangeNotifier {
         throw Exception('Transaction amount must be greater than 0');
       }
       
-      // Check if the new transaction would create negative balance for asset accounts
-      if (account.isAsset) {
+      // Check if the new transaction would create negative balance for asset accounts (not credit cards)
+      if (account.isAsset && account.type != AccountType.creditCard) {
         final currentBalance = account.balance;
         final oldAmount = oldTransaction.amount;
         final newAmount = transaction.amount;
@@ -113,6 +118,46 @@ class TransactionProviderHive with ChangeNotifier {
         
         if (newBalance < 0) {
           throw Exception('Insufficient balance. This would result in a negative balance of ${newBalance.abs().toStringAsFixed(2)}');
+        }
+      }
+      
+      // For credit cards, validate against credit limit instead of negative balance
+      if (account.type == AccountType.creditCard) {
+        final currentBalance = account.balance;
+        final oldAmount = oldTransaction.amount;
+        final newAmount = transaction.amount;
+        
+        // Calculate the new balance after the transaction update
+        double balanceChange = 0;
+        if (oldTransaction.type == TransactionType.income) {
+          balanceChange += oldAmount; // Payment was reducing debt, so we add it back
+        } else {
+          balanceChange -= oldAmount; // Purchase was increasing debt, so we subtract it
+        }
+        
+        if (transaction.type == TransactionType.income) {
+          balanceChange -= newAmount; // New payment reduces debt
+        } else {
+          balanceChange += newAmount; // New purchase increases debt
+        }
+        
+        final newBalance = currentBalance + balanceChange;
+        
+        // Get credit card to check credit limit
+        try {
+          final creditCardsBox = await _db.creditCardsBox;
+          final creditCards = creditCardsBox.values.where((card) => card.accountId == account.id).toList();
+          
+          if (creditCards.isNotEmpty) {
+            final creditCard = creditCards.first;
+            if (newBalance > creditCard.creditLimit) {
+              throw Exception('Transaction would exceed credit limit. Available credit: ${(creditCard.creditLimit - currentBalance).toStringAsFixed(2)}');
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Warning: Could not validate credit limit: $e');
+          }
         }
       }
       
@@ -220,6 +265,11 @@ class TransactionProviderHive with ChangeNotifier {
   /// Search transactions
   List<Transaction> searchTransactions(String query) {
     return _db.searchTransactions(query);
+  }
+
+  /// Get a single transaction by ID
+  Transaction? getTransaction(String transactionId) {
+    return _db.getTransaction(transactionId);
   }
 
   // ===== ACCOUNT METHODS =====
@@ -463,12 +513,27 @@ class TransactionProviderHive with ChangeNotifier {
 
   /// Validate that transaction won't create negative balance
   Future<void> _validateTransactionBalance(Transaction transaction) async {
-    if (transaction.type == TransactionType.expense) {
-      final account = _db.getAccount(transaction.accountId);
-      if (account == null) return;
-      
-      // Allow negative balances for credit cards (they represent debt)
-      if (account.type != AccountType.creditCard) {
+    final account = _db.getAccount(transaction.accountId);
+    if (account == null) return;
+    
+    if (account.type == AccountType.creditCard) {
+      // For credit cards, validate against credit limit
+      if (transaction.type == TransactionType.expense) {
+        // Get credit card to check credit limit
+        final creditCardsBox = await _db.creditCardsBox;
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == account.id).toList();
+        
+        if (creditCards.isNotEmpty) {
+          final creditCard = creditCards.first;
+          final newBalance = account.balance + transaction.amount; // Expense increases debt
+          if (newBalance > creditCard.creditLimit) {
+            throw Exception('Transaction would exceed credit limit. Available credit: ${creditCard.creditLimit - account.balance}');
+          }
+        }
+      }
+    } else {
+      // For asset accounts, prevent negative balances
+      if (transaction.type == TransactionType.expense) {
         final newBalance = account.balance - transaction.amount;
         if (newBalance < 0) {
           throw Exception('Insufficient funds. Cannot have negative balance in ${account.type.name} account.');
@@ -484,13 +549,25 @@ class TransactionProviderHive with ChangeNotifier {
 
     double newBalance = account.balance;
     
-    // Update balance based on transaction type (Cash and Bank are assets)
-    if (transaction.type == TransactionType.income) {
-      // Income increases asset balance
-      newBalance += transaction.amount;
-    } else if (transaction.type == TransactionType.expense) {
-      // Expense decreases asset balance (validation already done in _validateTransactionBalance)
-      newBalance -= transaction.amount;
+    // Update balance based on account type and transaction type
+    if (account.type == AccountType.creditCard) {
+      // Credit card logic: balance represents debt owed
+      if (transaction.type == TransactionType.income) {
+        // Payment reduces debt (decreases balance)
+        newBalance -= transaction.amount;
+      } else if (transaction.type == TransactionType.expense) {
+        // Purchase increases debt (increases balance)
+        newBalance += transaction.amount;
+      }
+    } else {
+      // Asset accounts (Cash, Bank, etc.): balance represents money available
+      if (transaction.type == TransactionType.income) {
+        // Income increases asset balance
+        newBalance += transaction.amount;
+      } else if (transaction.type == TransactionType.expense) {
+        // Expense decreases asset balance (validation already done in _validateTransactionBalance)
+        newBalance -= transaction.amount;
+      }
     }
 
     // Update account with new balance
@@ -506,6 +583,7 @@ class TransactionProviderHive with ChangeNotifier {
         
         if (creditCards.isNotEmpty) {
           final creditCard = creditCards.first;
+          // Use the same newBalance to ensure consistency
           final updatedCreditCard = creditCard.copyWith(currentBalance: newBalance);
           await creditCardsBox.put(creditCard.id, updatedCreditCard);
         }
@@ -644,13 +722,25 @@ class TransactionProviderHive with ChangeNotifier {
 
     double newBalance = account.balance;
     
-    // Reverse the balance change based on transaction type (Cash and Bank are assets)
-    if (transaction.type == TransactionType.income) {
-      // Income was increasing asset, so deletion decreases asset
-      newBalance -= transaction.amount;
-    } else if (transaction.type == TransactionType.expense) {
-      // Expense was decreasing asset, so deletion increases asset
-      newBalance += transaction.amount;
+    // Reverse the balance change based on account type
+    if (account.type == AccountType.creditCard) {
+      // Credit card logic: balance represents debt owed
+      if (transaction.type == TransactionType.income) {
+        // Payment was reducing debt, so deletion increases debt (adds back to balance)
+        newBalance += transaction.amount;
+      } else if (transaction.type == TransactionType.expense) {
+        // Purchase was increasing debt, so deletion decreases debt (subtracts from balance)
+        newBalance -= transaction.amount;
+      }
+    } else {
+      // Asset accounts (Cash, Bank, etc.): balance represents money available
+      if (transaction.type == TransactionType.income) {
+        // Income was increasing asset, so deletion decreases asset
+        newBalance -= transaction.amount;
+      } else if (transaction.type == TransactionType.expense) {
+        // Expense was decreasing asset, so deletion increases asset
+        newBalance += transaction.amount;
+      }
     }
 
     // Update account with reversed balance
@@ -666,6 +756,7 @@ class TransactionProviderHive with ChangeNotifier {
         
         if (creditCards.isNotEmpty) {
           final creditCard = creditCards.first;
+          // Use the same newBalance to ensure consistency
           final updatedCreditCard = creditCard.copyWith(currentBalance: newBalance);
           await creditCardsBox.put(creditCard.id, updatedCreditCard);
         }

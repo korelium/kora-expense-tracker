@@ -11,7 +11,9 @@ import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/providers/bill_provider.dart';
 import '../../../data/models/credit_card.dart';
 import '../../../data/models/credit_card_transaction.dart';
+import '../../../data/models/transaction.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../screens/transactions/add_transaction_screen.dart';
 
 /// Detailed view of a specific credit card
 /// Shows transactions, payment history, and credit card details
@@ -72,7 +74,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           controller: _tabController,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
           labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
           tabs: const [
@@ -95,6 +97,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           // Get fresh transactions from the database directly
           return FutureBuilder<List<CreditCardTransaction>>(
             future: creditCardProvider.getFreshCreditCardTransactions(widget.creditCard.id),
+            key: ValueKey('${widget.creditCard.id}_${transactionProvider.transactions.length}'),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -118,6 +121,13 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _addTransaction(context),
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+        tooltip: 'Add Transaction',
+      ),
     );
   }
 
@@ -127,14 +137,14 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryBlue.withOpacity(0.8)],
+          colors: [AppTheme.primaryBlue, AppTheme.primaryBlue.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -183,7 +193,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Text(
             widget.creditCard.bankName,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 12,
             ),
           ),
@@ -227,7 +237,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Text(
             title,
             style: TextStyle(
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -259,7 +269,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           Text(
             title,
             style: TextStyle(
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontSize: 10,
               fontWeight: FontWeight.w500,
             ),
@@ -328,7 +338,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -438,9 +448,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -476,7 +486,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             Icon(
               Icons.receipt_long,
               size: 32,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -484,7 +494,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),
@@ -492,7 +502,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               'Add your first transaction to start tracking',
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -527,7 +537,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
                   '${transactions.length}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -556,65 +566,76 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
   }
 
   Widget _buildTransactionItem(transaction) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-            width: 0.5,
+    return InkWell(
+      onTap: () => _editTransaction(context, transaction),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: transaction.isPurchase 
-                  ? Colors.red.withOpacity(0.1)
-                  : Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: transaction.isPurchase 
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(
+                transaction.isPurchase ? Icons.shopping_cart : Icons.payment,
+                size: 14,
+                color: transaction.isPurchase ? Colors.red : Colors.green,
+              ),
             ),
-            child: Icon(
-              transaction.isPurchase ? Icons.shopping_cart : Icons.payment,
-              size: 14,
-              color: transaction.isPurchase ? Colors.red : Colors.green,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.displayName,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transaction.displayName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _formatDate(transaction.transactionDate),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDate(transaction.transactionDate),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Text(
-            transaction.formattedAmount,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: transaction.isPayment ? Colors.green : Colors.red,
+            Text(
+              transaction.formattedAmount,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: transaction.isPayment ? Colors.green : Colors.red,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => _editTransaction(context, transaction),
+              icon: const Icon(Icons.edit, size: 16),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              tooltip: 'Edit Transaction',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -677,7 +698,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             Icon(
               Icons.receipt_long,
               size: 32,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -685,7 +706,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -789,9 +810,9 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -801,7 +822,7 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -923,6 +944,62 @@ class _CreditCardDetailsScreenState extends State<CreditCardDetailsScreen> with 
       return '${difference} days ago';
     } else {
       return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  /// Add new transaction for this credit card
+  Future<void> _addTransaction(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTransactionScreen(
+          initialType: TransactionType.expense, // Default to expense for credit cards
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      // Refresh both credit card and transaction data
+      if (mounted) {
+        context.read<CreditCardProvider>().refresh();
+        context.read<TransactionProviderHive>().refresh();
+        setState(() {});
+      }
+    }
+  }
+
+  /// Edit existing transaction
+  Future<void> _editTransaction(BuildContext context, transaction) async {
+    // Convert CreditCardTransaction to Transaction for editing
+    final transactionProvider = context.read<TransactionProviderHive>();
+    final originalTransaction = transactionProvider.getTransaction(transaction.transactionId);
+    
+    if (originalTransaction == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaction not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTransactionScreen(
+          transaction: originalTransaction,
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      // Refresh both credit card and transaction data
+      if (mounted) {
+        context.read<CreditCardProvider>().refresh();
+        context.read<TransactionProviderHive>().refresh();
+        setState(() {});
+      }
     }
   }
 

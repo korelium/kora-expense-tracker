@@ -300,6 +300,13 @@ class SmartNavigationBreadcrumb extends StatelessWidget {
           onTap: null, // Current page
         ));
         break;
+      case NavigationContext.loans:
+        breadcrumbs.add(BreadcrumbItem(
+          text: 'Loans',
+          icon: Icons.account_balance_wallet,
+          onTap: null, // Current page
+        ));
+        break;
       case NavigationContext.analytics:
         breadcrumbs.add(BreadcrumbItem(
           text: 'Analytics',

@@ -46,8 +46,10 @@ class NavigationController extends ChangeNotifier {
         case 2:
           return NavigationContext.creditCards;
         case 3:
-          return NavigationContext.analytics;
+          return NavigationContext.loans;
         case 4:
+          return NavigationContext.analytics;
+        case 5:
           return NavigationContext.more;
         default:
           return NavigationContext.homeOverview;
@@ -118,6 +120,10 @@ class NavigationController extends ChangeNotifier {
         return 'Back to Overview';
       case NavigationContext.accounts:
         return 'Back to Home';
+      case NavigationContext.creditCards:
+        return 'Back to Home';
+      case NavigationContext.loans:
+        return 'Back to Home';
       case NavigationContext.analytics:
         return 'Back to Home';
       case NavigationContext.more:
@@ -135,6 +141,8 @@ class NavigationController extends ChangeNotifier {
       case NavigationContext.homeAnalytics:
         return Icons.dashboard;
       case NavigationContext.accounts:
+      case NavigationContext.creditCards:
+      case NavigationContext.loans:
       case NavigationContext.analytics:
       case NavigationContext.more:
         return Icons.home;
@@ -151,6 +159,7 @@ enum NavigationContext {
   homeAnalytics,
   accounts,
   creditCards,
+  loans,
   analytics,
   more,
 }
@@ -185,7 +194,7 @@ class NavigationUtils {
     navController.navigateToBottomNav(index);
     
     if (animated) {
-      final screenNames = ['Home', 'Accounts', 'Analytics', 'More'];
+      final screenNames = ['Home', 'Accounts', 'Credit Cards', 'Loans', 'Analytics', 'More'];
       _showNavigationFeedback(context, 'Switching to ${screenNames[index]}');
     }
   }

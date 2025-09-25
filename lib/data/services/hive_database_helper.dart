@@ -12,8 +12,7 @@ import '../models/category.dart' as app_category;
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../models/bill.dart';
-import '../models/loan.dart';
-import '../models/loan_payment.dart';
+import '../../features/loans/data/models/debt.dart';
 
 /// Hive database helper class
 /// Manages all database operations for transactions, accounts, and categories
@@ -32,8 +31,6 @@ class HiveDatabaseHelper {
   static const String _creditCardsBox = 'credit_cards_box';
   static const String _creditCardTransactionsBox = 'credit_card_transactions_box';
   static const String _billsBox = 'bills_box';
-  static const String _loansBox = 'loans_box';
-  static const String _loanPaymentsBox = 'loan_payments_box';
 
   // ===== BOX REFERENCES =====
   late Box<Transaction> _transactionsBoxRef;
@@ -43,8 +40,6 @@ class HiveDatabaseHelper {
   late Box<CreditCard> _creditCardsBoxRef;
   late Box<CreditCardTransaction> _creditCardTransactionsBoxRef;
   late Box<Bill> _billsBoxRef;
-  late Box<Loan> _loansBoxRef;
-  late Box<LoanPayment> _loanPaymentsBoxRef;
 
   // ===== INITIALIZATION =====
   /// Initialize Hive database and open all boxes
@@ -106,20 +101,13 @@ class HiveDatabaseHelper {
     if (!Hive.isAdapterRegistered(12)) {
       Hive.registerAdapter(BillStatusAdapter());
     }
-    if (!Hive.isAdapterRegistered(13)) {
-      Hive.registerAdapter(LoanAdapter());
+    
+    // Debt adapters
+    if (!Hive.isAdapterRegistered(20)) {
+      Hive.registerAdapter(DebtAdapter());
     }
-    if (!Hive.isAdapterRegistered(14)) {
-      Hive.registerAdapter(LoanTypeAdapter());
-    }
-    if (!Hive.isAdapterRegistered(15)) {
-      Hive.registerAdapter(LoanPaymentAdapter());
-    }
-    if (!Hive.isAdapterRegistered(16)) {
-      Hive.registerAdapter(PaymentMethodAdapter());
-    }
-    if (!Hive.isAdapterRegistered(17)) {
-      Hive.registerAdapter(PaymentStatusAdapter());
+    if (!Hive.isAdapterRegistered(21)) {
+      Hive.registerAdapter(DebtPaymentAdapter());
     }
   }
 
@@ -132,8 +120,6 @@ class HiveDatabaseHelper {
     _creditCardsBoxRef = await Hive.openBox<CreditCard>(_creditCardsBox);
     _creditCardTransactionsBoxRef = await Hive.openBox<CreditCardTransaction>(_creditCardTransactionsBox);
     _billsBoxRef = await Hive.openBox<Bill>(_billsBox);
-    _loansBoxRef = await Hive.openBox<Loan>(_loansBox);
-    _loanPaymentsBoxRef = await Hive.openBox<LoanPayment>(_loanPaymentsBox);
     
     // Create default categories if none exist
     await _createDefaultCategories();
@@ -919,83 +905,4 @@ class HiveDatabaseHelper {
   /// Get bills box
   Box<Bill> get billsBox => _billsBoxRef;
   
-  /// Get loans box
-  Box<Loan> get loansBox => _loansBoxRef;
-  
-  /// Get loan payments box
-  Box<LoanPayment> get loanPaymentsBox => _loanPaymentsBoxRef;
-
-  // ===== LOAN METHODS =====
-  
-  /// Add a new loan
-  Future<void> addLoan(Loan loan) async {
-    await _loansBoxRef.put(loan.id, loan);
-  }
-
-  /// Update an existing loan
-  Future<void> updateLoan(Loan loan) async {
-    await _loansBoxRef.put(loan.id, loan);
-  }
-
-  /// Delete a loan
-  Future<void> deleteLoan(String loanId) async {
-    await _loansBoxRef.delete(loanId);
-  }
-
-  /// Get loan by ID
-  Loan? getLoan(String loanId) {
-    return _loansBoxRef.get(loanId);
-  }
-
-  /// Get all loans
-  List<Loan> getLoans() {
-    return _loansBoxRef.values.toList();
-  }
-
-  /// Get loans by type
-  List<Loan> getLoansByType(LoanType type) {
-    return _loansBoxRef.values.where((loan) => loan.type == type).toList();
-  }
-
-  /// Get active loans
-  List<Loan> getActiveLoans() {
-    return _loansBoxRef.values.where((loan) => loan.isActive).toList();
-  }
-
-  // ===== LOAN PAYMENT METHODS =====
-  
-  /// Add a new loan payment
-  Future<void> addLoanPayment(LoanPayment payment) async {
-    await _loanPaymentsBoxRef.put(payment.id, payment);
-  }
-
-  /// Update an existing loan payment
-  Future<void> updateLoanPayment(LoanPayment payment) async {
-    await _loanPaymentsBoxRef.put(payment.id, payment);
-  }
-
-  /// Delete a loan payment
-  Future<void> deleteLoanPayment(String paymentId) async {
-    await _loanPaymentsBoxRef.delete(paymentId);
-  }
-
-  /// Get loan payment by ID
-  LoanPayment? getLoanPayment(String paymentId) {
-    return _loanPaymentsBoxRef.get(paymentId);
-  }
-
-  /// Get all loan payments
-  List<LoanPayment> getLoanPayments() {
-    return _loanPaymentsBoxRef.values.toList();
-  }
-
-  /// Get payments for a specific loan
-  List<LoanPayment> getPaymentsForLoan(String loanId) {
-    return _loanPaymentsBoxRef.values.where((payment) => payment.loanId == loanId).toList();
-  }
-
-  /// Get payments by status
-  List<LoanPayment> getPaymentsByStatus(PaymentStatus status) {
-    return _loanPaymentsBoxRef.values.where((payment) => payment.status == status).toList();
-  }
 }

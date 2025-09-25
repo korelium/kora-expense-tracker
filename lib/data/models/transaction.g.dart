@@ -26,15 +26,17 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       date: fields[6] as DateTime,
       type: fields[7] as TransactionType,
       receiptImagePath: fields[8] as String?,
+      receiptImagePaths: (fields[12] as List).cast<String>(),
       fromAccountId: fields[9] as String?,
       toAccountId: fields[10] as String?,
+      notes: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Transaction obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,10 +55,14 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       ..write(obj.type)
       ..writeByte(8)
       ..write(obj.receiptImagePath)
+      ..writeByte(12)
+      ..write(obj.receiptImagePaths)
       ..writeByte(9)
       ..write(obj.fromAccountId)
       ..writeByte(10)
-      ..write(obj.toAccountId);
+      ..write(obj.toAccountId)
+      ..writeByte(11)
+      ..write(obj.notes);
   }
 
   @override

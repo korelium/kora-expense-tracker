@@ -23,13 +23,6 @@ class CreditCardsScreen extends StatefulWidget {
 }
 
 class _CreditCardsScreenState extends State<CreditCardsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CreditCardProvider>().initialize();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,114 +92,211 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
   Widget _buildSummaryCards(CreditCardProvider creditCardProvider, CurrencyProvider currencyProvider) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildCompactSummaryCard(
-                title: 'Total Credit Limit',
-                amount: currencyProvider.formatAmount(creditCardProvider.totalCreditLimit),
-                icon: Icons.account_balance,
-                color: Colors.blue,
-              ),
+        // Overall Credit Card Overview Card
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryBlue.withValues(alpha: 0.1),
+                AppTheme.primaryBlue.withValues(alpha: 0.05),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildCompactSummaryCard(
-                title: 'Current Balance',
-                amount: currencyProvider.formatAmount(creditCardProvider.totalCurrentBalance),
-                icon: Icons.credit_card,
-                color: Colors.red,
-              ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+              width: 1,
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildCompactSummaryCard(
-                title: 'Available Credit',
-                amount: currencyProvider.formatAmount(creditCardProvider.totalAvailableCredit),
-                icon: Icons.check_circle,
-                color: Colors.green,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildCompactSummaryCard(
-                title: 'Avg Utilization',
-                amount: '${creditCardProvider.averageCreditUtilization.toStringAsFixed(1)}',
-                icon: Icons.trending_up,
-                color: Colors.orange,
-                isPercentage: true,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.credit_card,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Credit Card Overview',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                        Text(
+                          '${creditCardProvider.activeCreditCards.length} active cards',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              
+              const SizedBox(height: 16),
+              
+              // Summary Stats
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildOverviewItem(
+                      'Total Credit Limit',
+                      currencyProvider.formatAmount(creditCardProvider.totalCreditLimit),
+                      Icons.account_balance,
+                      Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildOverviewItem(
+                      'Current Balance',
+                      currencyProvider.formatAmount(creditCardProvider.totalCurrentBalance),
+                      Icons.credit_card,
+                      Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildOverviewItem(
+                      'Available Credit',
+                      currencyProvider.formatAmount(creditCardProvider.totalAvailableCredit),
+                      Icons.check_circle,
+                      Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildOverviewItem(
+                      'Overall Utilization',
+                      '${creditCardProvider.overallCreditUtilization.toStringAsFixed(1)}%',
+                      Icons.trending_up,
+                      creditCardProvider.isOverallUtilizationHigh ? Colors.red : Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Warnings Section (Due Soon warnings hidden for now)
+              if (creditCardProvider.isOverallUtilizationHigh || 
+                  creditCardProvider.highUtilizationCardsCount > 0) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(height: 12),
+                
+                // Overall Utilization Warning
+                if (creditCardProvider.isOverallUtilizationHigh)
+                  _buildWarningItem(
+                    Icons.warning,
+                    Colors.orange,
+                    'Overall credit utilization is ${creditCardProvider.overallCreditUtilization.toStringAsFixed(1)}% (above 30% threshold)',
+                  ),
+                
+                // High Utilization Cards Warning
+                if (creditCardProvider.highUtilizationCardsCount > 0)
+                  _buildWarningItem(
+                    Icons.error_outline,
+                    Colors.red,
+                    '${creditCardProvider.highUtilizationCardsCount} card(s) exceed 30% utilization',
+                  ),
+                
+                // Due Soon/Overdue Warning - HIDDEN FOR NOW
+                // if (creditCardProvider.creditCardsWithDuePayments.isNotEmpty)
+                //   _buildWarningItem(
+                //     Icons.schedule,
+                //     Colors.orange,
+                //     '${creditCardProvider.creditCardsWithDuePayments.length} card(s) have payments due soon or overdue',
+                //   ),
+              ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryCard({
-    required String title,
-    required String amount,
-    required IconData icon,
-    required Color color,
-    bool isPercentage = false,
-  }) {
+
+
+  Widget _buildOverviewItem(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
+                    color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isPercentage
-                      ? '$amount%'
-                      : amount,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
         ],
@@ -214,60 +304,29 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
     );
   }
 
-  Widget _buildCompactSummaryCard({
-    required String title,
-    required String amount,
-    required IconData icon,
-    required Color color,
-    bool isPercentage = false,
-  }) {
+  Widget _buildWarningItem(IconData icon, Color color, String message) {
     return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
             ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 10,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isPercentage ? '$amount%' : amount,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -302,7 +361,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
         border: Border.all(color: Theme.of(context).colorScheme.outline),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -322,7 +381,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withOpacity(0.1),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
@@ -381,7 +440,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                 creditCard.bankName,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -393,28 +452,104 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               const SizedBox(height: 4),
               _buildCompactBalanceInfo('Available', creditCard.formattedAvailableCredit(currencyProvider.currencySymbol), Colors.green),
               const SizedBox(height: 4),
-              _buildCompactBalanceInfo('Utilization', creditCard.formattedCreditUtilization, 
-                creditCard.creditUtilization > 30 ? Colors.orange : Colors.blue),
+              _buildCompactBalanceInfo('Credit Limit', creditCard.formattedCreditLimit(currencyProvider.currencySymbol), Colors.blue),
+              const SizedBox(height: 4),
+              _buildCompactBalanceInfo('Safe Limit (30%)', currencyProvider.formatAmount(creditCard.creditLimit * 0.3), Colors.orange),
               
-              // Due date warning
-              if (creditCard.isPaymentDueSoon || creditCard.isOverdue) ...[
+              // Progress Bar for Utilization
+              const SizedBox(height: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Credit Usage',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        creditCard.formattedCreditUtilization,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: creditCard.creditUtilization.abs() > 30 ? Colors.red : Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: (creditCard.creditUtilization.abs() / 100).clamp(0.0, 1.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: creditCard.creditUtilization.abs() > 30 ? Colors.red : Colors.blue,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // 30% Threshold Warning
+              if (creditCard.creditUtilization.abs() > 30) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: creditCard.isOverdue ? Colors.red : Colors.orange,
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
-                  child: Text(
-                    creditCard.isOverdue ? 'Overdue' : 'Due Soon',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning, color: Colors.red.shade700, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        'High Utilization (${creditCard.creditUtilization.abs().toStringAsFixed(1)}%)',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
+              
+              // Due date warning - HIDDEN FOR NOW
+              // if (creditCard.isPaymentDueSoon || creditCard.isOverdue) ...[
+              //   const SizedBox(height: 8),
+              //   Container(
+              //     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              //     decoration: BoxDecoration(
+              //       color: creditCard.isOverdue ? Colors.red : Colors.orange,
+              //       borderRadius: BorderRadius.circular(8),
+              //     ),
+              //     child: Text(
+              //       creditCard.isOverdue ? 'Overdue' : 'Due Soon',
+              //       style: TextStyle(
+              //         color: Theme.of(context).colorScheme.surface,
+              //         fontSize: 10,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //   ),
+              // ],
             ],
           ),
         ),
@@ -423,30 +558,6 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
   }
 
 
-  Widget _buildBalanceInfo(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildCompactBalanceInfo(String label, String value, Color color) {
     return Row(
@@ -456,7 +567,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -472,40 +583,6 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
     );
   }
 
-  Widget _buildTransactionItem(creditCardTransaction) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(
-            creditCardTransaction.isPurchase ? Icons.shopping_cart : Icons.payment,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              creditCardTransaction.displayName,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            creditCardTransaction.formattedAmount,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: creditCardTransaction.isPayment ? Colors.green : Colors.red,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyState() {
     return Center(
@@ -517,13 +594,13 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.1),
+                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Icon(
                 Icons.credit_card,
                 size: 64,
-                color: AppTheme.primaryBlue.withOpacity(0.7),
+                color: AppTheme.primaryBlue.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -541,7 +618,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 32),
@@ -591,7 +668,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),

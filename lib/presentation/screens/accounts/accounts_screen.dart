@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../data/providers/currency_provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/providers/credit_card_provider.dart';
+import '../../../features/loans/data/providers/debt_provider.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/credit_card.dart';
 import '../../../core/theme/app_theme.dart';
@@ -46,8 +47,8 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<CurrencyProvider, TransactionProviderHive, CreditCardProvider>(
-      builder: (context, currencyProvider, transactionProvider, creditCardProvider, child) {
+    return Consumer4<CurrencyProvider, TransactionProviderHive, CreditCardProvider, DebtProvider>(
+      builder: (context, currencyProvider, transactionProvider, creditCardProvider, debtProvider, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
@@ -104,49 +105,155 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
                 )
               : Column(
                   children: [
-                    // Summary Section
+                    // Summary Section (Compact)
                     Container(
-                      margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.all(20),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.surfaceContainer,
-                            Theme.of(context).colorScheme.surfaceContainerHighest,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-                            blurRadius: 6,
+                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                            blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildSummaryItem(context, 'Total Assets', currencyProvider.formatAmount(
-                            transactionProvider.accounts.fold(0.0, (sum, account) => 
-                              account.isAsset ? sum + account.balance : sum - account.balance.abs()
-                            )
-                          )),
-                          _buildSummaryItem(context, 'Accounts', transactionProvider.accounts.length.toString()),
-                        ],
+                      child: Consumer<CreditCardProvider>(
+                        builder: (context, creditCardProvider, child) {
+                          return Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  _buildSummaryItem(context, 'Total Assets', currencyProvider.formatAmount(
+                                    transactionProvider.accounts.fold(0.0, (sum, account) => 
+                                      account.isAsset ? sum + account.balance : sum - account.balance.abs()
+                                    )
+                                  )),
+                                  _buildSummaryItem(context, 'Accounts', transactionProvider.accounts.length.toString()),
+                                ],
+                              ),
+                              if (creditCardProvider.creditCards.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _buildSummaryItem(context, 'Total Credit Limit', currencyProvider.formatAmount(creditCardProvider.totalCreditLimit)),
+                                    _buildSummaryItem(context, 'Available Credit', currencyProvider.formatAmount(creditCardProvider.totalAvailableCredit)),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _buildSummaryItem(context, 'Credit Utilization', '${creditCardProvider.overallCreditUtilization.toStringAsFixed(1)}%'),
+                                    _buildSummaryItem(context, 'Credit Cards', creditCardProvider.creditCards.length.toString()),
+                                  ],
+                                ),
+                                // Credit utilization warning
+                                if (creditCardProvider.isOverallUtilizationHigh) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.orange.shade200),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.warning, color: Colors.orange.shade700, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Credit utilization above 30% threshold',
+                                          style: TextStyle(
+                                            color: Colors.orange.shade700,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          );
+                        },
                       ),
                     ),
+                    // Loan Overview Section
+                    if (debtProvider.debts.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.account_balance_wallet,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Loan Overview',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildSummaryItem(context, 'Total Owed', currencyProvider.formatAmount(
+                                  debtProvider.debts.fold(0.0, (sum, debt) => sum + debt.amount)
+                                )),
+                                _buildSummaryItem(context, 'Total Paid', currencyProvider.formatAmount(
+                                  debtProvider.debts.fold(0.0, (sum, debt) => sum + debt.paidAmount)
+                                )),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildSummaryItem(context, 'Remaining', currencyProvider.formatAmount(
+                                  debtProvider.debts.fold(0.0, (sum, debt) => sum + (debt.amount - debt.paidAmount))
+                                )),
+                                _buildSummaryItem(context, 'Active Loans', debtProvider.debts.length.toString()),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     // Accounts List
                     Expanded(
                       child: Builder(
@@ -430,16 +537,16 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -527,7 +634,7 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
             border: Border.all(color: Theme.of(context).colorScheme.outline),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -550,7 +657,7 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withOpacity(0.1),
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -576,7 +683,7 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
                               creditCard.bankName,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -792,7 +899,7 @@ class _AccountsScreenState extends State<AccountsScreen> with WidgetsBindingObse
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),

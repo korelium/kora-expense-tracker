@@ -43,9 +43,13 @@ class Transaction extends HiveObject {
   @HiveField(7)
   final TransactionType type;
   
-  /// Path to receipt image (optional)
+  /// Path to receipt image (optional) - kept for backward compatibility
   @HiveField(8)
   final String? receiptImagePath;
+  
+  /// List of receipt image paths (optional) - supports multiple images
+  @HiveField(12)
+  final List<String> receiptImagePaths;
   
   /// Source account ID for transfers (optional)
   @HiveField(9)
@@ -54,6 +58,10 @@ class Transaction extends HiveObject {
   /// Destination account ID for transfers (optional)
   @HiveField(10)
   final String? toAccountId;
+  
+  /// Additional notes for the transaction (optional)
+  @HiveField(11)
+  final String? notes;
 
   /// Constructor for Transaction model
   Transaction({
@@ -66,8 +74,10 @@ class Transaction extends HiveObject {
     required this.date,
     required this.type,
     this.receiptImagePath,
+    this.receiptImagePaths = const [],
     this.fromAccountId,
     this.toAccountId,
+    this.notes,
   });
 
   /// Convert Transaction to JSON for storage
@@ -82,6 +92,8 @@ class Transaction extends HiveObject {
       'date': date.toIso8601String(),
       'type': type.toString().split('.').last,
       'receiptImagePath': receiptImagePath,
+      'receiptImagePaths': receiptImagePaths,
+      'notes': notes,
     };
   }
 
@@ -100,6 +112,8 @@ class Transaction extends HiveObject {
         orElse: () => TransactionType.expense, // Default to expense if not found
       ),
       receiptImagePath: json['receiptImagePath'],
+      receiptImagePaths: List<String>.from(json['receiptImagePaths'] ?? []),
+      notes: json['notes'],
     );
   }
 
@@ -114,8 +128,10 @@ class Transaction extends HiveObject {
     DateTime? date,
     TransactionType? type,
     String? receiptImagePath,
+    List<String>? receiptImagePaths,
     String? fromAccountId,
     String? toAccountId,
+    String? notes,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -127,8 +143,10 @@ class Transaction extends HiveObject {
       date: date ?? this.date,
       type: type ?? this.type,
       receiptImagePath: receiptImagePath ?? this.receiptImagePath,
+      receiptImagePaths: receiptImagePaths ?? this.receiptImagePaths,
       fromAccountId: fromAccountId ?? this.fromAccountId,
       toAccountId: toAccountId ?? this.toAccountId,
+      notes: notes ?? this.notes,
     );
   }
 
