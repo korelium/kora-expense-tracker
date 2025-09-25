@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:typed_data';
 import '../../../data/models/credit_card.dart';
+import '../../../data/models/credit_card_statement.dart';
+import '../../../data/models/transaction.dart';
 import '../../../data/providers/credit_card_provider.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
+import '../../../data/providers/statement_provider.dart';
+import '../../../data/providers/currency_provider.dart';
 import '../../../core/services/currency_service.dart';
+import '../../../core/services/pdf_statement_service.dart';
 import '../../widgets/transaction_form/widgets/compact_transaction_form.dart';
 import 'credit_card_statement_screen.dart';
 import 'statement_generation_screen.dart';
@@ -23,20 +29,23 @@ class CreditCardDetailsEnhancedScreen extends StatefulWidget {
 }
 
 class _CreditCardDetailsEnhancedScreenState extends State<CreditCardDetailsEnhancedScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  late TabController _statementsTabController;
   late CreditCard _creditCard;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _statementsTabController = TabController(length: 2, vsync: this);
     _creditCard = widget.creditCard;
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _statementsTabController.dispose();
     super.dispose();
   }
 
@@ -655,38 +664,413 @@ class _CreditCardDetailsEnhancedScreenState extends State<CreditCardDetailsEnhan
   }
 
   Widget _buildStatementsTab() {
-    return Center(
+    return Consumer<StatementProvider>(
+      builder: (context, statementProvider, child) {
+        final statements = statementProvider.getStatementsForCard(_creditCard.id);
+        
+        // Always separate statements by status, even if empty
+        final currentStatements = statements.where((s) => s.status != StatementStatus.paid).toList();
+        final paidStatements = statements.where((s) => s.status == StatementStatus.paid).toList();
+        
+        return Column(
+          children: [
+            // Header with generate button
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Statements (${statements.length})',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _generateStatement,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Generate'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Tab bar for statement categories - ALWAYS show both tabs
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _statementsTabController,
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.schedule, size: 18),
+                        const SizedBox(width: 8),
+                        Text('Current/Past (${currentStatements.length})'),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle, size: 18),
+                        const SizedBox(width: 8),
+                        Text('Paid (${paidStatements.length})'),
+                      ],
+                    ),
+                  ),
+                ],
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                indicator: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                dividerColor: Colors.transparent,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Tab content - ALWAYS show both tabs
+            Expanded(
+              child: TabBarView(
+                controller: _statementsTabController,
+                physics: const NeverScrollableScrollPhysics(), // Disable swipe
+                children: [
+                  // Current/Past statements
+                  _buildStatementsList(currentStatements, isCurrentTab: true),
+                  // Paid statements
+                  _buildStatementsList(paidStatements, isCurrentTab: false),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatementsList(List<CreditCardStatement> statements, {required bool isCurrentTab}) {
+    if (statements.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isCurrentTab ? Icons.schedule_outlined : Icons.check_circle_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isCurrentTab ? 'No Current/Past Statements' : 'No Paid Statements',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isCurrentTab 
+                ? 'Generated statements will appear here until paid'
+                : 'Paid statements will be moved here automatically',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              ),
+            ),
+            if (isCurrentTab) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _generateStatement,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Generate Statement'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: statements.length,
+      itemBuilder: (context, index) {
+        final statement = statements[index];
+        return _buildStatementItem(statement);
+      },
+    );
+  }
+
+  Widget _buildStatementItem(CreditCardStatement statement) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with period and status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    statement.statementPeriod,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatementStatusColor(statement.status),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    statement.statusText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // Statement details in a grid
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Statement Date',
+                    '${statement.statementDate.day}/${statement.statementDate.month}/${statement.statementDate.year}',
+                    Icons.calendar_today,
+                  ),
+                ),
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Due Date',
+                    '${statement.dueDate.day}/${statement.dueDate.month}/${statement.dueDate.year}',
+                    Icons.schedule,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Previous Balance',
+                    CurrencyService.formatAmount(statement.previousBalance),
+                    Icons.account_balance_wallet,
+                  ),
+                ),
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'New Purchases',
+                    CurrencyService.formatAmount(statement.totalPurchases),
+                    Icons.shopping_cart,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Payments',
+                    CurrencyService.formatAmount(statement.totalPayments),
+                    Icons.payment,
+                  ),
+                ),
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'New Balance',
+                    CurrencyService.formatAmount(statement.newBalance),
+                    Icons.account_balance,
+                    isHighlight: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Minimum Payment',
+                    CurrencyService.formatAmount(statement.minimumPayment),
+                    Icons.credit_card,
+                    isHighlight: statement.status != StatementStatus.paid,
+                  ),
+                ),
+                Expanded(
+                  child: _buildStatementDetailItem(
+                    'Available Credit',
+                    CurrencyService.formatAmount(statement.availableCredit),
+                    Icons.credit_score,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Action buttons
+            Row(
+              children: [
+                // PDF Export Button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _exportStatementToPDF(statement),
+                    icon: const Icon(Icons.picture_as_pdf, size: 18),
+                    label: const Text('PDF'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // Delete Button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _deleteStatement(statement),
+                    icon: const Icon(Icons.delete, size: 18),
+                    label: const Text('Delete'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // Pay Button
+                if (statement.status != StatementStatus.paid)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _makePaymentForStatement(statement),
+                      icon: const Icon(Icons.payment, size: 18),
+                      label: const Text('Pay Now'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.check_circle, size: 18),
+                      label: const Text('Paid'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green,
+                        side: const BorderSide(color: Colors.green),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatementDetailItem(String label, String value, IconData icon, {bool isHighlight = false}) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isHighlight 
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: isHighlight 
+            ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3))
+            : null,
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.description_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isHighlight 
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           Text(
-            'No Statements Generated',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isHighlight 
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Generate your first statement to view it here',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _generateStatement,
-            icon: const Icon(Icons.add),
-            label: const Text('Generate Statement'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
+  }
+
+  Color _getStatementStatusColor(StatementStatus status) {
+    switch (status) {
+      case StatementStatus.generated:
+        return Colors.blue;
+      case StatementStatus.paid:
+        return Colors.green;
+      case StatementStatus.overdue:
+        return Colors.red;
+    }
   }
 
   Widget _buildAnalyticsTab() {
@@ -890,5 +1274,180 @@ class _CreditCardDetailsEnhancedScreenState extends State<CreditCardDetailsEnhan
         );
       }
     }
+  }
+
+  Future<void> _exportStatementToPDF(CreditCardStatement statement) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Get required providers
+      final transactionProvider = context.read<TransactionProviderHive>();
+      final currencyProvider = context.read<CurrencyProvider>();
+      
+      // Get transactions for this statement
+      final transactions = statement.transactionIds
+          .map((id) => transactionProvider.getTransaction(id))
+          .where((transaction) => transaction != null)
+          .cast<Transaction>()
+          .toList();
+
+      // Generate PDF
+      final pdfBytes = await PDFStatementService.generateStatementPDF(
+        statement: statement,
+        creditCard: _creditCard,
+        transactions: transactions,
+        currencyProvider: currencyProvider,
+      );
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Show export options
+      _showExportOptions(pdfBytes, statement);
+
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExportOptions(Uint8List pdfBytes, CreditCardStatement statement) {
+    final fileName = 'Statement_${_creditCard.cardName}_${statement.statementPeriod.replaceAll(' ', '_')}';
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Export Statement',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.share, color: Colors.blue),
+              title: const Text('Share PDF'),
+              subtitle: const Text('Share via email, messaging apps'),
+              onTap: () async {
+                Navigator.pop(context);
+                await PDFStatementService.sharePDF(pdfBytes, fileName);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.print, color: Colors.green),
+              title: const Text('Print PDF'),
+              subtitle: const Text('Print directly to printer'),
+              onTap: () async {
+                Navigator.pop(context);
+                await PDFStatementService.printPDF(pdfBytes, fileName);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.save, color: Colors.orange),
+              title: const Text('Save to Device'),
+              subtitle: const Text('Save PDF to device storage'),
+              onTap: () async {
+                Navigator.pop(context);
+                final filePath = await PDFStatementService.savePDFToDevice(pdfBytes, fileName);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('PDF saved to: $filePath'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteStatement(CreditCardStatement statement) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Statement'),
+        content: Text(
+          'Are you sure you want to delete the statement for ${statement.statementPeriod}?\n\n'
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await context.read<StatementProvider>().deleteStatement(statement.id);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Statement deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting statement: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _makePaymentForStatement(CreditCardStatement statement) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreditCardPaymentScreen(
+          creditCard: _creditCard,
+          statement: statement,
+        ),
+      ),
+    ).then((paymentSuccessful) {
+      if (paymentSuccessful == true) {
+        // Refresh statements after successful payment
+        context.read<StatementProvider>().loadStatementsForCard(_creditCard.id);
+      }
+    });
   }
 }

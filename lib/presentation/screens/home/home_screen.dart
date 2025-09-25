@@ -196,9 +196,7 @@ class _HomeContentState extends State<HomeContent> with TickerProviderStateMixin
               const SizedBox(width: 8),
             ],
           ),
-          body: transactionProvider.transactions.isEmpty
-              ? const EmptyStateWidget()
-              : Column(
+          body: Column(
                   children: [
           // Header with Greeting & Balance
           Container(

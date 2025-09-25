@@ -31,6 +31,10 @@ class CompactTransactionForm extends StatefulWidget {
 class _CompactTransactionFormState extends State<CompactTransactionForm> {
   late TransactionFormController _controller;
   final _formKey = GlobalKey<FormState>();
+  final _descriptionFocusNode = FocusNode();
+  final _amountFocusNode = FocusNode();
+  final _notesFocusNode = FocusNode();
+
 
   @override
   void initState() {
@@ -47,6 +51,9 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
   @override
   void dispose() {
     _controller.dispose();
+    _descriptionFocusNode.dispose();
+    _amountFocusNode.dispose();
+    _notesFocusNode.dispose();
     super.dispose();
   }
 
@@ -233,6 +240,12 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         // Title input (compact)
         TextFormField(
           controller: _controller.descriptionController,
+          focusNode: _descriptionFocusNode,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            _amountFocusNode.requestFocus();
+          },
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
@@ -275,6 +288,11 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
         // Large amount input
         TextFormField(
           controller: _controller.amountController,
+          focusNode: _amountFocusNode,
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) {
+            _notesFocusNode.requestFocus();
+          },
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 24,
@@ -700,7 +718,9 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _controller.notesController,
+            focusNode: _notesFocusNode,
             maxLines: 4,
+            textInputAction: TextInputAction.done,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 14,

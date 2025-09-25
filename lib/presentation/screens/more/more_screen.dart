@@ -5,6 +5,7 @@ import '../../../data/providers/theme_provider.dart';
 import '../../widgets/common/currency_selector.dart';
 import '../../widgets/common/theme_toggle.dart';
 import '../analytics/analytics_screen.dart';
+import '../export/export_manager_screen.dart';
 import '../../../features/loans/presentation/screens/loans_screen.dart';
 
 class MoreScreen extends StatelessWidget {
@@ -65,6 +66,21 @@ class MoreScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => const AnalyticsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.folder_open, color: Color(0xFF10B981)),
+                        title: const Text('Export Manager'),
+                        subtitle: const Text('Manage exported files'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ExportManagerScreen(),
                             ),
                           );
                         },
