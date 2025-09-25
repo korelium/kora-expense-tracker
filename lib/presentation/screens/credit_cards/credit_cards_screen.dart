@@ -7,11 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/credit_card_provider.dart';
 import '../../../data/providers/currency_provider.dart';
+import '../../../core/services/currency_service.dart';
 import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../data/models/credit_card.dart';
 import '../../../core/theme/app_theme.dart';
 import 'add_credit_card_screen.dart';
-import 'credit_card_details_screen.dart';
+import 'credit_card_details_enhanced_screen.dart';
 
 /// Main credit cards screen
 /// Shows all credit cards with their balances and quick actions
@@ -171,7 +172,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   Expanded(
                     child: _buildOverviewItem(
                       'Total Credit Limit',
-                      currencyProvider.formatAmount(creditCardProvider.totalCreditLimit),
+                      CurrencyService.formatAmount(creditCardProvider.totalCreditLimit),
                       Icons.account_balance,
                       Colors.blue,
                     ),
@@ -180,7 +181,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   Expanded(
                     child: _buildOverviewItem(
                       'Current Balance',
-                      currencyProvider.formatAmount(creditCardProvider.totalCurrentBalance),
+                      CurrencyService.formatAmount(creditCardProvider.totalCurrentBalance),
                       Icons.credit_card,
                       Colors.red,
                     ),
@@ -195,7 +196,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
                   Expanded(
                     child: _buildOverviewItem(
                       'Available Credit',
-                      currencyProvider.formatAmount(creditCardProvider.totalAvailableCredit),
+                      CurrencyService.formatAmount(creditCardProvider.totalAvailableCredit),
                       Icons.check_circle,
                       Colors.green,
                     ),
@@ -448,13 +449,13 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
               const SizedBox(height: 8),
               
               // Balance info
-              _buildCompactBalanceInfo('Balance', creditCard.formattedCurrentBalance(currencyProvider.currencySymbol), Colors.red),
+              _buildCompactBalanceInfo('Balance', CurrencyService.formatAmount(creditCard.currentBalance), Colors.red),
               const SizedBox(height: 4),
-              _buildCompactBalanceInfo('Available', creditCard.formattedAvailableCredit(currencyProvider.currencySymbol), Colors.green),
+              _buildCompactBalanceInfo('Available', CurrencyService.formatAmount(creditCard.creditLimit - creditCard.currentBalance), Colors.green),
               const SizedBox(height: 4),
-              _buildCompactBalanceInfo('Credit Limit', creditCard.formattedCreditLimit(currencyProvider.currencySymbol), Colors.blue),
+              _buildCompactBalanceInfo('Credit Limit', CurrencyService.formatAmount(creditCard.creditLimit), Colors.blue),
               const SizedBox(height: 4),
-              _buildCompactBalanceInfo('Safe Limit (30%)', currencyProvider.formatAmount(creditCard.creditLimit * 0.3), Colors.orange),
+              _buildCompactBalanceInfo('Safe Limit (30%)', CurrencyService.formatAmount(creditCard.creditLimit * 0.3), Colors.orange),
               
               // Progress Bar for Utilization
               const SizedBox(height: 8),
@@ -693,7 +694,7 @@ class _CreditCardsScreenState extends State<CreditCardsScreen> {
   void _navigateToCreditCardDetails(BuildContext context, CreditCard creditCard) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CreditCardDetailsScreen(creditCard: creditCard),
+        builder: (context) => CreditCardDetailsEnhancedScreen(creditCard: creditCard),
       ),
     );
   }

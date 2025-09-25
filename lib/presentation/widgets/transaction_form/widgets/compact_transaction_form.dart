@@ -863,7 +863,7 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Return true to indicate deletion
         }
       } catch (e) {
         if (mounted) {
@@ -1047,7 +1047,7 @@ class _CompactTransactionFormState extends State<CompactTransactionForm> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate success
       }
     } catch (e) {
       if (mounted) {

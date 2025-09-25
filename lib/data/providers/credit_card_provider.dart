@@ -431,4 +431,28 @@ class CreditCardProvider extends ChangeNotifier {
   Future<void> refresh() async {
     await initialize();
   }
+
+  /// Refresh credit card balances from account data
+  Future<void> refreshBalances() async {
+    try {
+      // Get all accounts to update credit card balances
+      final accountsBox = await _databaseHelper.accountsBox;
+      final accounts = accountsBox.values.where((account) => account.type == AccountType.creditCard).toList();
+      
+      // Update credit card balances
+      final creditCardsBox = await _databaseHelper.creditCardsBox;
+      for (final account in accounts) {
+        final creditCards = creditCardsBox.values.where((card) => card.accountId == account.id).toList();
+        for (final creditCard in creditCards) {
+          final updatedCreditCard = creditCard.copyWith(currentBalance: account.balance);
+          await creditCardsBox.put(creditCard.id, updatedCreditCard);
+        }
+      }
+      
+      // Reload credit cards to reflect updated balances
+      await _loadCreditCards();
+    } catch (e) {
+      print('Error refreshing credit card balances: $e');
+    }
+  }
 }
