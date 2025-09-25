@@ -25,10 +25,22 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   final _creditLimitController = TextEditingController();
   final _interestRateController = TextEditingController();
   final _minimumPaymentController = TextEditingController();
+  final _minimumPaymentPercentageController = TextEditingController();
+  final _minimumPaymentFixedController = TextEditingController();
+  final _gracePeriodController = TextEditingController();
   final _notesController = TextEditingController();
   
   int _selectedDueDay = 1;
+  int _selectedStatementDay = 1;
+  bool _useFixedMinimumPayment = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _minimumPaymentPercentageController.text = '3.0';
+    _gracePeriodController.text = '21';
+  }
 
   @override
   void dispose() {
@@ -38,6 +50,9 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     _creditLimitController.dispose();
     _interestRateController.dispose();
     _minimumPaymentController.dispose();
+    _minimumPaymentPercentageController.dispose();
+    _minimumPaymentFixedController.dispose();
+    _gracePeriodController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -72,6 +87,8 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                   _buildCardInfoSection(),
                   const SizedBox(height: 24),
                   _buildCreditDetailsSection(),
+                  const SizedBox(height: 24),
+                  _buildBillingCycleSection(),
                   const SizedBox(height: 24),
                   _buildPaymentDetailsSection(),
                   const SizedBox(height: 24),
@@ -232,6 +249,70 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     );
   }
 
+  Widget _buildBillingCycleSection() {
+    return _buildSection(
+      title: 'Billing Cycle',
+      icon: Icons.calendar_today,
+      children: [
+        _buildStatementDaySelector(),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _gracePeriodController,
+          label: 'Grace Period (Days) *',
+          hint: 'e.g., 21',
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Grace period is required';
+            }
+            final days = int.tryParse(value);
+            if (days == null || days < 1 || days > 30) {
+              return 'Please enter a valid grace period (1-30 days)';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildMinimumPaymentTypeSelector(),
+        const SizedBox(height: 16),
+        if (_useFixedMinimumPayment)
+          _buildTextField(
+            controller: _minimumPaymentFixedController,
+            label: 'Fixed Minimum Payment *',
+            hint: 'e.g., 500',
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Fixed minimum payment is required';
+              }
+              final amount = double.tryParse(value);
+              if (amount == null || amount < 0) {
+                return 'Please enter a valid amount';
+              }
+              return null;
+            },
+          )
+        else
+          _buildTextField(
+            controller: _minimumPaymentPercentageController,
+            label: 'Minimum Payment Percentage *',
+            hint: 'e.g., 3.0',
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Minimum payment percentage is required';
+              }
+              final percentage = double.tryParse(value);
+              if (percentage == null || percentage < 0 || percentage > 100) {
+                return 'Please enter a valid percentage (0-100)';
+              }
+              return null;
+            },
+          ),
+      ],
+    );
+  }
+
   Widget _buildPaymentDetailsSection() {
     return _buildSection(
       title: 'Payment Details',
@@ -241,33 +322,33 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
         const SizedBox(height: 16),
         _buildTextField(
           controller: _minimumPaymentController,
-          label: 'Minimum Payment',
-          hint: 'e.g., 25',
+          label: 'Minimum Payment (Legacy)',
+          hint: 'e.g., 25 (will be calculated automatically)',
           keyboardType: TextInputType.number,
-          validator: (value) {
-            if (value != null && value.isNotEmpty) {
-              final amount = double.tryParse(value);
-              if (amount == null || amount < 0) {
-                return 'Please enter a valid minimum payment';
-              }
-            }
-            return null;
-          },
+          readOnly: true,
         ),
       ],
     );
   }
 
-  Widget _buildDueDaySelector() {
+  Widget _buildStatementDaySelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Due Day *',
+          'Statement Generation Day *',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppTheme.lightText,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Day of month when your statement is generated',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.lightText.withOpacity(0.7),
           ),
         ),
         const SizedBox(height: 8),
@@ -280,7 +361,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
-              value: _selectedDueDay,
+              value: _selectedStatementDay,
               isExpanded: true,
               style: TextStyle(
                 color: AppTheme.lightText,
@@ -301,6 +382,138 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                             '$day',
                             style: TextStyle(
                               color: AppTheme.lightText,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStatementDay = value!;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMinimumPaymentTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Minimum Payment Type *',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.lightText,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: RadioListTile<bool>(
+                title: const Text(
+                  'Percentage',
+                  style: TextStyle(fontSize: 14),
+                ),
+                subtitle: const Text(
+                  'e.g., 3% of balance',
+                  style: TextStyle(fontSize: 12),
+                ),
+                value: false,
+                groupValue: _useFixedMinimumPayment,
+                onChanged: (value) {
+                  setState(() {
+                    _useFixedMinimumPayment = value!;
+                  });
+                },
+                activeColor: AppTheme.primaryBlue,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            Expanded(
+              child: RadioListTile<bool>(
+                title: const Text(
+                  'Fixed Amount',
+                  style: TextStyle(fontSize: 14),
+                ),
+                subtitle: const Text(
+                  'e.g., ₹500',
+                  style: TextStyle(fontSize: 12),
+                ),
+                value: true,
+                groupValue: _useFixedMinimumPayment,
+                onChanged: (value) {
+                  setState(() {
+                    _useFixedMinimumPayment = value!;
+                  });
+                },
+                activeColor: AppTheme.primaryBlue,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDueDaySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Due Day (Legacy) *',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.lightText,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Will be calculated from statement date + grace period',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.lightText.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.lightBorder),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: _selectedDueDay,
+              isExpanded: true,
+              style: TextStyle(
+                color: AppTheme.lightText.withOpacity(0.6),
+                fontSize: 16,
+              ),
+              dropdownColor: Colors.white,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: AppTheme.lightText.withOpacity(0.6),
+              ),
+              items: List.generate(31, (index) => index + 1)
+                  .map((day) => DropdownMenuItem<int>(
+                        value: day,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            '$day',
+                            style: TextStyle(
+                              color: AppTheme.lightText.withOpacity(0.6),
                               fontSize: 16,
                             ),
                           ),
@@ -382,6 +595,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     int? maxLength,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,6 +615,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
           maxLength: maxLength,
           maxLines: maxLines,
           validator: validator,
+          readOnly: readOnly,
           style: TextStyle(
             color: AppTheme.lightText,
             fontSize: 16,
@@ -503,6 +718,15 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     });
 
     try {
+      // Calculate minimum payment based on type
+      double calculatedMinimumPayment = 0.0;
+      if (_useFixedMinimumPayment) {
+        calculatedMinimumPayment = double.parse(_minimumPaymentFixedController.text.trim());
+      } else {
+        // For percentage, we'll calculate it when needed based on balance
+        calculatedMinimumPayment = 0.0; // Will be calculated dynamically
+      }
+
       await creditCardProvider.addCreditCard(
         cardName: _cardNameController.text.trim(),
         lastFourDigits: _lastFourDigitsController.text.trim().isEmpty ? '0000' : _lastFourDigitsController.text.trim(),
@@ -512,9 +736,15 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
             ? double.parse(_interestRateController.text.trim())
             : 0.0,
         dueDay: _selectedDueDay,
-        minimumPayment: _minimumPaymentController.text.isNotEmpty
-            ? double.parse(_minimumPaymentController.text.trim())
-            : 0.0,
+        statementGenerationDay: _selectedStatementDay,
+        gracePeriodDays: int.parse(_gracePeriodController.text.trim()),
+        minimumPaymentPercentage: _useFixedMinimumPayment 
+            ? 0.0 
+            : double.parse(_minimumPaymentPercentageController.text.trim()),
+        minimumPaymentFixedAmount: _useFixedMinimumPayment 
+            ? double.parse(_minimumPaymentFixedController.text.trim())
+            : null,
+        minimumPayment: calculatedMinimumPayment,
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,

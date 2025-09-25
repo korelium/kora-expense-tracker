@@ -47,24 +47,40 @@ class CreditCard extends HiveObject {
   @HiveField(8)
   final int dueDay;
   
-  /// Minimum payment amount
+  /// Day of month when statement is generated (1-31)
   @HiveField(9)
+  final int statementGenerationDay;
+  
+  /// Grace period in days (default: 21)
+  @HiveField(10)
+  final int gracePeriodDays;
+  
+  /// Minimum payment percentage (default: 3.0)
+  @HiveField(11)
+  final double minimumPaymentPercentage;
+  
+  /// Minimum payment fixed amount (optional)
+  @HiveField(12)
+  final double? minimumPaymentFixedAmount;
+  
+  /// Minimum payment amount (calculated or fixed)
+  @HiveField(13)
   final double minimumPayment;
   
   /// Date when the credit card was created
-  @HiveField(10)
+  @HiveField(14)
   final DateTime createdAt;
   
   /// Date of last payment made
-  @HiveField(11)
+  @HiveField(15)
   final DateTime? lastPaymentDate;
   
   /// Whether the credit card is active
-  @HiveField(12)
+  @HiveField(16)
   final bool isActive;
   
   /// Optional notes about the credit card
-  @HiveField(13)
+  @HiveField(17)
   final String? notes;
 
   /// Constructor for CreditCard model
@@ -78,6 +94,10 @@ class CreditCard extends HiveObject {
     required this.currentBalance,
     required this.interestRate,
     required this.dueDay,
+    required this.statementGenerationDay,
+    this.gracePeriodDays = 21,
+    this.minimumPaymentPercentage = 3.0,
+    this.minimumPaymentFixedAmount,
     required this.minimumPayment,
     required this.createdAt,
     this.lastPaymentDate,
@@ -97,6 +117,10 @@ class CreditCard extends HiveObject {
       'currentBalance': currentBalance,
       'interestRate': interestRate,
       'dueDay': dueDay,
+      'statementGenerationDay': statementGenerationDay,
+      'gracePeriodDays': gracePeriodDays,
+      'minimumPaymentPercentage': minimumPaymentPercentage,
+      'minimumPaymentFixedAmount': minimumPaymentFixedAmount,
       'minimumPayment': minimumPayment,
       'createdAt': createdAt.toIso8601String(),
       'lastPaymentDate': lastPaymentDate?.toIso8601String(),
@@ -117,6 +141,10 @@ class CreditCard extends HiveObject {
       currentBalance: (json['currentBalance'] as num?)?.toDouble() ?? 0.0,
       interestRate: (json['interestRate'] as num?)?.toDouble() ?? 0.0,
       dueDay: json['dueDay'] ?? 1,
+      statementGenerationDay: json['statementGenerationDay'] ?? 1,
+      gracePeriodDays: json['gracePeriodDays'] ?? 21,
+      minimumPaymentPercentage: (json['minimumPaymentPercentage'] as num?)?.toDouble() ?? 3.0,
+      minimumPaymentFixedAmount: (json['minimumPaymentFixedAmount'] as num?)?.toDouble(),
       minimumPayment: (json['minimumPayment'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       lastPaymentDate: json['lastPaymentDate'] != null 
@@ -138,6 +166,10 @@ class CreditCard extends HiveObject {
     double? currentBalance,
     double? interestRate,
     int? dueDay,
+    int? statementGenerationDay,
+    int? gracePeriodDays,
+    double? minimumPaymentPercentage,
+    double? minimumPaymentFixedAmount,
     double? minimumPayment,
     DateTime? createdAt,
     DateTime? lastPaymentDate,
@@ -154,6 +186,10 @@ class CreditCard extends HiveObject {
       currentBalance: currentBalance ?? this.currentBalance,
       interestRate: interestRate ?? this.interestRate,
       dueDay: dueDay ?? this.dueDay,
+      statementGenerationDay: statementGenerationDay ?? this.statementGenerationDay,
+      gracePeriodDays: gracePeriodDays ?? this.gracePeriodDays,
+      minimumPaymentPercentage: minimumPaymentPercentage ?? this.minimumPaymentPercentage,
+      minimumPaymentFixedAmount: minimumPaymentFixedAmount ?? this.minimumPaymentFixedAmount,
       minimumPayment: minimumPayment ?? this.minimumPayment,
       createdAt: createdAt ?? this.createdAt,
       lastPaymentDate: lastPaymentDate ?? this.lastPaymentDate,
@@ -256,18 +292,53 @@ class CreditCard extends HiveObject {
     return dueDate;
   }
 
+  /// Get the next statement generation date
+  DateTime get nextStatementDate {
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final nextMonth = DateTime(now.year, now.month + 1);
+    
+    // Calculate statement date for current month
+    DateTime statementDate;
+    if (statementGenerationDay <= now.day) {
+      // Statement date has passed this month, check next month
+      statementDate = DateTime(nextMonth.year, nextMonth.month, statementGenerationDay);
+    } else {
+      // Statement date is this month
+      statementDate = DateTime(currentMonth.year, currentMonth.month, statementGenerationDay);
+    }
+    
+    return statementDate;
+  }
+
+  /// Calculate due date based on statement generation date and grace period
+  DateTime get calculatedDueDate {
+    final statementDate = nextStatementDate;
+    return statementDate.add(Duration(days: gracePeriodDays));
+  }
+
+  /// Calculate minimum payment based on percentage or fixed amount
+  double get calculatedMinimumPayment {
+    if (minimumPaymentFixedAmount != null) {
+      return minimumPaymentFixedAmount!;
+    }
+    return (currentBalance * minimumPaymentPercentage / 100).clamp(0, currentBalance);
+  }
+
   /// Calculate suggested payment amount
   /// Suggests minimum payment or more if utilization is high
   double get suggestedPayment {
     if (currentBalance <= 0) return 0.0;
     
+    final minPayment = calculatedMinimumPayment;
+    
     // If utilization is high (>30%), suggest more than minimum
     if (creditUtilization > 30) {
-      return (currentBalance * 0.1).clamp(minimumPayment, currentBalance);
+      return (currentBalance * 0.1).clamp(minPayment, currentBalance);
     }
     
     // Otherwise suggest minimum payment
-    return minimumPayment.clamp(0, currentBalance);
+    return minPayment.clamp(0, currentBalance);
   }
 
   /// Get credit score impact based on utilization

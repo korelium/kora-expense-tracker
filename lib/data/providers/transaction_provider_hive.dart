@@ -598,12 +598,23 @@ class TransactionProviderHive with ChangeNotifier {
 
   /// Update account balances for transfer transactions
   Future<void> _updateTransferBalances(Account fromAccount, Account toAccount, double amount) async {
-    // Update source account balance (decrease)
+    // Update source account balance (decrease for asset accounts)
     final updatedFromAccount = fromAccount.copyWith(balance: fromAccount.balance - amount);
     await _db.updateAccount(updatedFromAccount);
     
-    // Update destination account balance (increase)
-    final updatedToAccount = toAccount.copyWith(balance: toAccount.balance + amount);
+    // Update destination account balance
+    // For credit cards: payment reduces debt (decrease balance)
+    // For asset accounts: transfer increases balance
+    double newToAccountBalance;
+    if (toAccount.type == AccountType.creditCard) {
+      // Payment to credit card reduces debt (decreases balance)
+      newToAccountBalance = toAccount.balance - amount;
+    } else {
+      // Transfer to asset account increases balance
+      newToAccountBalance = toAccount.balance + amount;
+    }
+    
+    final updatedToAccount = toAccount.copyWith(balance: newToAccountBalance);
     await _db.updateAccount(updatedToAccount);
     
     // Update credit card balances if applicable
@@ -913,7 +924,7 @@ class TransactionProviderHive with ChangeNotifier {
       final categories = _db.getMainCategories(app_category.CategoryType.expense);
       final transferCategoryId = categories.isNotEmpty ? categories.first.id : 'default';
       
-      // Create single transfer transaction
+      // Create transfer transaction for source account
       final transferTransaction = Transaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         accountId: fromAccountId, // Primary account (source)
@@ -926,8 +937,27 @@ class TransactionProviderHive with ChangeNotifier {
         toAccountId: toAccountId,
       );
       
-      // Add the transfer transaction
+      // Add the transfer transaction for source account
       await _db.addTransaction(transferTransaction);
+      
+      // Create credit card transaction if destination is a credit card
+      Transaction? creditCardTransaction;
+      if (toAccount.type == AccountType.creditCard) {
+        creditCardTransaction = Transaction(
+          id: '${DateTime.now().millisecondsSinceEpoch}_cc', // Different ID
+          accountId: toAccountId, // Credit card account
+          categoryId: transferCategoryId,
+          amount: amount,
+          type: TransactionType.income, // Payment is income for credit card
+          description: 'Payment: $description',
+          date: DateTime.now(),
+          fromAccountId: fromAccountId,
+          toAccountId: toAccountId,
+        );
+        
+        // Add the credit card transaction
+        await _db.addTransaction(creditCardTransaction);
+      }
       
       // Update both account balances manually
       await _updateTransferBalances(fromAccount, toAccount, amount);
@@ -937,12 +967,8 @@ class TransactionProviderHive with ChangeNotifier {
         if (fromAccount.type == AccountType.creditCard) {
           await _createCreditCardTransaction(transferTransaction);
         }
-        if (toAccount.type == AccountType.creditCard) {
-          // Create a separate credit card transaction for the destination account
-          final creditCardTransaction = transferTransaction.copyWith(
-            accountId: toAccountId,
-            type: TransactionType.income, // Credit card sees it as income
-          );
+        if (toAccount.type == AccountType.creditCard && creditCardTransaction != null) {
+          // Create credit card transaction record for the payment
           await _createCreditCardTransaction(creditCardTransaction);
         }
       } catch (e) {

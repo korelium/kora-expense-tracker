@@ -7,6 +7,8 @@ import '../../../data/providers/transaction_provider_hive.dart';
 import '../../../core/services/currency_service.dart';
 import '../../widgets/transaction_form/widgets/compact_transaction_form.dart';
 import 'credit_card_statement_screen.dart';
+import 'statement_generation_screen.dart';
+import 'credit_card_payment_screen.dart';
 
 class CreditCardDetailsEnhancedScreen extends StatefulWidget {
   final CreditCard creditCard;
@@ -801,14 +803,25 @@ class _CreditCardDetailsEnhancedScreenState extends State<CreditCardDetailsEnhan
   }
 
   void _makePayment() {
-    // Implementation for making payment
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreditCardPaymentScreen(creditCard: _creditCard),
+      ),
+    ).then((paymentSuccessful) {
+      if (paymentSuccessful == true) {
+        // Refresh data after successful payment
+        context.read<CreditCardProvider>().refreshBalances();
+        context.read<TransactionProviderHive>().refresh();
+      }
+    });
   }
 
   void _generateStatement() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CreditCardStatementScreen(creditCard: _creditCard),
+        builder: (context) => StatementGenerationScreen(creditCard: _creditCard),
       ),
     );
   }

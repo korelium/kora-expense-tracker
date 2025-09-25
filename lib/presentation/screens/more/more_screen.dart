@@ -4,6 +4,8 @@ import '../../../data/providers/currency_provider.dart';
 import '../../../data/providers/theme_provider.dart';
 import '../../widgets/common/currency_selector.dart';
 import '../../widgets/common/theme_toggle.dart';
+import '../analytics/analytics_screen.dart';
+import '../../../features/loans/presentation/screens/loans_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -23,6 +25,56 @@ class MoreScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // Quick Access Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Quick Access',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ListTile(
+                        leading: const Icon(Icons.account_balance_wallet, color: Color(0xFF8B5CF6)),
+                        title: const Text('Loans'),
+                        subtitle: const Text('Manage loans'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoansScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.analytics, color: Color(0xFF06B6D4)),
+                        title: const Text('Analytics'),
+                        subtitle: const Text('View reports'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AnalyticsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
               // Currency Section
               Card(
                 child: Padding(

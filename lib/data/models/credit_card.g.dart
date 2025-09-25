@@ -26,18 +26,22 @@ class CreditCardAdapter extends TypeAdapter<CreditCard> {
       currentBalance: fields[6] as double,
       interestRate: fields[7] as double,
       dueDay: fields[8] as int,
-      minimumPayment: fields[9] as double,
-      createdAt: fields[10] as DateTime,
-      lastPaymentDate: fields[11] as DateTime?,
-      isActive: fields[12] as bool,
-      notes: fields[13] as String?,
+      statementGenerationDay: fields[9] as int,
+      gracePeriodDays: fields[10] as int,
+      minimumPaymentPercentage: fields[11] as double,
+      minimumPaymentFixedAmount: fields[12] as double?,
+      minimumPayment: fields[13] as double,
+      createdAt: fields[14] as DateTime,
+      lastPaymentDate: fields[15] as DateTime?,
+      isActive: fields[16] as bool,
+      notes: fields[17] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, CreditCard obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -57,14 +61,22 @@ class CreditCardAdapter extends TypeAdapter<CreditCard> {
       ..writeByte(8)
       ..write(obj.dueDay)
       ..writeByte(9)
-      ..write(obj.minimumPayment)
+      ..write(obj.statementGenerationDay)
       ..writeByte(10)
-      ..write(obj.createdAt)
+      ..write(obj.gracePeriodDays)
       ..writeByte(11)
-      ..write(obj.lastPaymentDate)
+      ..write(obj.minimumPaymentPercentage)
       ..writeByte(12)
-      ..write(obj.isActive)
+      ..write(obj.minimumPaymentFixedAmount)
       ..writeByte(13)
+      ..write(obj.minimumPayment)
+      ..writeByte(14)
+      ..write(obj.createdAt)
+      ..writeByte(15)
+      ..write(obj.lastPaymentDate)
+      ..writeByte(16)
+      ..write(obj.isActive)
+      ..writeByte(17)
       ..write(obj.notes);
   }
 

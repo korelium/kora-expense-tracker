@@ -17,6 +17,7 @@ import 'data/providers/currency_provider.dart';
 import 'data/providers/transaction_provider_hive.dart';
 import 'data/providers/theme_provider.dart';
 import 'data/providers/credit_card_provider.dart';
+import 'data/providers/statement_provider.dart';
 import 'data/providers/bill_provider.dart';
 import 'data/services/hive_database_helper.dart';
 import 'features/loans/data/providers/debt_provider.dart';
@@ -55,6 +56,9 @@ class KoraApp extends StatelessWidget {
         
         // Credit card management
         ChangeNotifierProvider(create: (_) => CreditCardProvider()),
+        
+        // Statement management
+        ChangeNotifierProvider(create: (_) => StatementProvider()),
         
         // Bill management
         ChangeNotifierProvider(create: (_) => BillProvider()),

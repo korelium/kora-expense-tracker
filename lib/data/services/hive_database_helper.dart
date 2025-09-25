@@ -11,6 +11,7 @@ import '../models/account.dart';
 import '../models/category.dart' as app_category;
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
+import '../models/credit_card_statement.dart';
 import '../models/bill.dart';
 import '../../features/loans/data/models/debt.dart';
 
@@ -30,6 +31,7 @@ class HiveDatabaseHelper {
   static const String _settingsBox = 'settings_box';
   static const String _creditCardsBox = 'credit_cards_box';
   static const String _creditCardTransactionsBox = 'credit_card_transactions_box';
+  static const String _creditCardStatementsBox = 'credit_card_statements_box';
   static const String _billsBox = 'bills_box';
 
   // ===== BOX REFERENCES =====
@@ -39,6 +41,7 @@ class HiveDatabaseHelper {
   late Box _settingsBoxRef;
   late Box<CreditCard> _creditCardsBoxRef;
   late Box<CreditCardTransaction> _creditCardTransactionsBoxRef;
+  late Box<CreditCardStatement> _creditCardStatementsBoxRef;
   late Box<Bill> _billsBoxRef;
 
   // ===== INITIALIZATION =====
@@ -95,6 +98,12 @@ class HiveDatabaseHelper {
     if (!Hive.isAdapterRegistered(8)) {
       Hive.registerAdapter(CreditCardTransactionTypeAdapter());
     }
+    if (!Hive.isAdapterRegistered(9)) {
+      Hive.registerAdapter(StatementStatusAdapter());
+    }
+    if (!Hive.isAdapterRegistered(10)) {
+      Hive.registerAdapter(CreditCardStatementAdapter());
+    }
     if (!Hive.isAdapterRegistered(11)) {
       Hive.registerAdapter(BillAdapter());
     }
@@ -119,6 +128,7 @@ class HiveDatabaseHelper {
     _settingsBoxRef = await Hive.openBox(_settingsBox);
     _creditCardsBoxRef = await Hive.openBox<CreditCard>(_creditCardsBox);
     _creditCardTransactionsBoxRef = await Hive.openBox<CreditCardTransaction>(_creditCardTransactionsBox);
+    _creditCardStatementsBoxRef = await Hive.openBox<CreditCardStatement>(_creditCardStatementsBox);
     _billsBoxRef = await Hive.openBox<Bill>(_billsBox);
     
     // Create default categories if none exist
@@ -901,6 +911,9 @@ class HiveDatabaseHelper {
   
   /// Get credit card transactions box
   Box<CreditCardTransaction> get creditCardTransactionsBox => _creditCardTransactionsBoxRef;
+  
+  /// Get credit card statements box
+  Box<CreditCardStatement> get creditCardStatementsBox => _creditCardStatementsBoxRef;
   
   /// Get bills box
   Box<Bill> get billsBox => _billsBoxRef;
